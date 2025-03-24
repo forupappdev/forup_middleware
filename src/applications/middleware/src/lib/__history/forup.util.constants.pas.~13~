@@ -7,8 +7,6 @@ const
   EMPTYSTRING = '';
   EMPTYDATE_BR = '  /  /    ';
   EMPTYDATETIME_BR = Concat(EMPTYDATE_BR,'   :  :  ');
-  DEF_LIST_SEPARATOR = ',';
-  RANGE_INFO = '..';
   _S = 'S';
   _N = 'N';
   INT_0 = 0;
@@ -17,7 +15,6 @@ const
   _FALSE = 'FALSE';
   _NULL = 'NULL';
   DB_CONVERT_ERROR = 'DBCE';
-
 
 type
   TDBtype = (tdChar, tdInteger, tdDate, tdDateTime, tdTime, tdReal,

@@ -95,11 +95,11 @@ end;
 class function TFunctions.db_boolean(aValue: integer;
   aReturnNull: Boolean): string;
 begin
-  if aValue in [INT_0,INT_1] then
+  if aValue in [0,1] then
     begin
       case aValue of
-        INT_0 : Result := _FALSE;
-        INT_1 : Result := _TRUE;
+        0 : Result := _FALSE;
+        1 : Result := _TRUE;
       end;
     end
   else

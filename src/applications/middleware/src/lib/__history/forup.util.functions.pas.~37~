@@ -18,8 +18,8 @@ type
       class function GetFunctions : TFunctions;
 
       {List manipulation}
-      class function getLine(aValues : TArray<string>; aSeparetor : char = DEF_LIST_SEPARATOR; aFormat : string = EMPTYSTRING) : string; overload;
-      class function getLine(aValues : TStrings; aSeparetor : char = DEF_LIST_SEPARATOR; aFormat : string = EMPTYSTRING) : string; overload;
+      class function getLine(aValues : TArray<string>; aSeparetor : char = ','; aFormat : string = EMPTYSTRING) : string; overload;
+      class function getLine(aValues : TStrings; aSeparetor : char = ','; aFormat : string = EMPTYSTRING) : string; overload;
       {End of List manipulation}
 
       {Database trasnform functions}
@@ -59,20 +59,20 @@ begin
     begin
       if aReturnNull then
         begin
-          Result := _NULL;
+          Result := 'NULL';
         end
-      else Result := DB_CONVERT_ERROR;
+      else Result := 'E';
     end
   else
     begin
-      if aValue.ToUpper.Equals(_NULL) then
+      if aValue.ToUpper.Equals('NULL') then
         Result := aValue
       else
         begin
           if TryStrToInt(aValue, intVal) then
             Result := aValue
           else
-            Result := DB_CONVERT_ERROR;
+            Result := 'E';
         end;
     end;
 end;
@@ -81,25 +81,25 @@ class function TFunctions.db_boolean(aValue, aReturnNull: Boolean): string;
 begin
   if aReturnNull then
     begin
-      Result := _NULL;
+      Result := 'NULL';
     end
   else
     begin
       if aValue then
-        Result := _TRUE
+        Result := 'true'
       else
-        Result := _FALSE;
+        Result := 'false';
     end;
 end;
 
 class function TFunctions.db_boolean(aValue: integer;
   aReturnNull: Boolean): string;
 begin
-  if aValue in [INT_0,INT_1] then
+  if aValue in [0,1] then
     begin
       case aValue of
-        INT_0 : Result := _FALSE;
-        INT_1 : Result := _TRUE;
+        0 : Result := _FALSE;
+        1 : Result := _TRUE;
       end;
     end
   else
@@ -107,14 +107,14 @@ begin
       if aReturnNull then
         Result := _NULL
       else
-        Result := DB_CONVERT_ERROR;
+        Result := 'E';
     end;
 end;
 
 class function TFunctions.db_boolean(aValue: string;
   aReturnNull: Boolean): string;
 begin
-  if concat(_S,RANGE_INFO,_N).Contains(aValue.ToUpper) then
+  if concat(_S,'..',_N).Contains(aValue.ToUpper) then
     begin
       if aValue.Equals(_S) then
         Result := _TRUE;
@@ -124,7 +124,7 @@ begin
       if aReturnNull then
         Result := _NULL
       else
-        Result := DB_CONVERT_ERROR;
+        Result := 'E';
     end;
 end;
 
@@ -168,7 +168,7 @@ begin
   try
     Result := aValue.ToString;
   except
-    Result := DB_CONVERT_ERROR;
+    Result := 'E';
   end;
 end;
 
