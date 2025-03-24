@@ -1,0 +1,252 @@
+unit core.sql.attributes;
+
+interface
+uses System.Classes, System.SysUtils, System.StrUtils, System.DateUtils, System.TypInfo, System.Rtti,
+Generics.Collections, forup.util.constants;
+
+type
+  {Types needed for core building}
+  TRuleAction = (None, Cascade, SetNull, SetDefault);
+  TSortingOrder = (NoSort, Ascending, Descending);
+  TMultiplicity = (OneToOne, OneToMany, ManyToOne, ManyToMany);
+  TGenerated = (Never, Insert, Always);
+  TJoin = (InnerJoin, LeftJoin, RightJoin, FullJoin);
+  TSequenceType = (NotInc, AutoInc, TableInc, GuidInc);
+  TRestriction = (NotNull, NoInsert, NoUpdate, NoValidate, Unique, Hidden);
+  TRestrictions = set of TRestriction;
+  TCascadeAction = (CascadeNone, CascadeAutoInc, CascadeInsert, CascadeUpdate, CascadeDelete);
+  TCascadeActions = set of TCascadeAction;
+  TMasterEvent = (AutoPost, AutoEdit, AutoInsert);
+  TMasterEvents = set of TMasterEvent;
+  TEnumType = (etChar, etString, etInteger, etBoolean);  
+  {End Types needed}
+
+  {$M+}
+  TPK = class(TObject)
+  private
+    FColumn : string;
+    FColType : TDBtype;
+    FAutoGenerate: TGenerated;
+    FSequenceType: TSequenceType;
+  public  
+    constructor Create(aColumn : string; aColType : TDBtype; aAutoGenerate : TGenerated = Insert;
+    aSequenceType : TSequenceType = GuidInc);
+  published    
+    property Column: string read FColumn write FColumn;
+    property ColType: TDBtype read FColType write FColType;
+    property AutoGenerate: TGenerated read FAutoGenerate write FAutoGenerate;
+    property SequenceType: TSequenceType read FSequenceType;
+  end;
+  
+  Table = class(TCustomAttribute)
+  private
+    FSchema : String;
+    FName: String;
+    FDescription: string;
+    function getFName : String;
+  public
+    constructor Create; overload;
+    constructor Create(aName: String); overload;
+    constructor Create(aName, aDescription: String); overload;
+    constructor Create(aSchema, aName, aDescription : String); overload;
+  published
+    property Name: String Read getFName;
+    property Description: string read FDescription;
+  end;
+
+  Column = class(TCustomAttribute)
+  private
+    FColumnName: String;
+    FFieldType: TDBtype;
+    FScale: Integer;
+    FSize: Integer;
+    FPrecision: Integer;
+    FDescription: string;
+    FExtraActions : TExtraActions;
+  public
+    constructor Create; overload;
+    constructor Create(aColumnName: String; aFieldType: TDBtype); overload;
+    constructor Create(aColumnName: String; aFieldType: TDBtype; aDescription: string = EMPTYSTRING); overload;
+    constructor Create(aColumnName: string; aFieldType: TDBtype; aSize: Integer; aDescription: string  = EMPTYSTRING; aExtraActions : TExtraActions = []); overload;
+    constructor Create(aColumnName: string; aFieldType: TDBtype; aPrecision, aScale: Integer; aDescription: string  = EMPTYSTRING; aExtraActions : TExtraActions = []); overload;
+  published
+    property ColumnName: String read FColumnName;
+    property FieldType: TDBtype read FFieldType;
+    property Size: Integer read FSize;
+    property Scale: Integer read FScale;
+    property Precision: Integer read FPrecision;
+    property Description: string read FDescription;
+    property ExtraActions: TExtraActions read FExtraActions write FExtraActions;
+  end;
+
+  Index = class(TCustomAttribute)
+  private
+    FName: string;
+    FColumnName: string;
+    FTableName: string;
+  published
+    property Name: string read FName;
+    property TableName: string read FTableName;
+    property ColumnName: string read FColumnName;
+  end;
+
+  PrimaryKey = class(TCustomAttribute)
+  protected
+    FColumns : TArray<TPK>;
+  public
+    constructor Create; overload;
+    constructor Create(aColumns : TArray<TPK>); overload;
+  published
+    property Columns: TArray<TPK> read FColumns;
+  end;
+
+  DefaultOrder = class(TCustomAttribute)
+  private
+    FOrderBy: string;
+  public
+    constructor Create; overload;
+    constructor Create(aColumns : TArray<string>); overload;
+  published
+    property OrderBy: string read FOrderBy;
+  end;
+
+
+implementation
+uses forup.util.functions;
+
+{ Table }
+
+constructor Table.Create;
+begin
+  Self.FSchema := EmptyStr;
+  Self.FName := EmptyStr;
+  Self.FDescription := EmptyStr;
+end;
+
+constructor Table.Create(aName: String);
+begin
+  inherited Create;
+  Self.FName := aName;
+end;
+
+constructor Table.Create(aSchema, aName, aDescription: String);
+begin
+  inherited Create;
+  Self.FSchema := aSchema;
+  Self.FName := aName;
+  Self.FDescription := aDescription;
+end;
+
+constructor Table.Create(aName, aDescription: String);
+begin
+  inherited Create;
+  Self.FName := aName;
+  Self.FDescription := aDescription;
+end;
+
+function Table.getFName: String;
+begin
+  if Self.FSchema.isEmpty then
+    Result := Self.FName
+  else Result := concat(Self.FSchema, '.', Self.FName);
+end;
+
+{ Column }
+
+constructor Column.Create;
+begin
+  FColumnName := EmptyStr;
+  FFieldType := tdChar;
+  FScale := -1;
+  FSize := 1;
+  FPrecision := 0;
+  FDescription := EmptyStr;
+  FExtraActions := [];
+end;
+
+constructor Column.Create(aColumnName: String; aFieldType: TDBtype);
+begin
+  inherited Create;
+  Self.FColumnName := aColumnName;
+  Self.FFieldType := aFieldType;
+end;
+
+constructor Column.Create(aColumnName: String; aFieldType: TDBtype;
+  aDescription: string);
+begin
+  inherited Create;
+  Self.FColumnName := aColumnName;
+  Self.FFieldType := aFieldType;
+  Self.FDescription := aDescription;
+end;
+
+constructor Column.Create(aColumnName: string; aFieldType: TDBtype;
+  aSize: Integer; aDescription: string; aExtraActions: TExtraActions);
+begin
+  inherited Create;
+  Self.FColumnName := aColumnName;
+  Self.FFieldType := aFieldType;
+  Self.FDescription := aDescription;
+  Self.FSize := aSize;
+  Self.FExtraActions := aExtraActions;
+end;
+
+constructor Column.Create(aColumnName: string; aFieldType: TDBtype; aPrecision,
+  aScale: Integer; aDescription: string; aExtraActions: TExtraActions);
+begin
+  inherited Create;
+  Self.FColumnName := aColumnName;
+  Self.FFieldType := aFieldType;
+  Self.FDescription := aDescription;
+  Self.FExtraActions := aExtraActions;
+  Self.FPrecision := aPrecision;
+  Self.FScale := aScale;
+end;
+
+{ DefaultOrder }
+
+constructor DefaultOrder.Create(aColumns: TArray<string>);
+begin
+  inherited Create;
+  Self.FOrderBy := TFunctions.getFunctions.getLine(aColumns);
+end;
+
+constructor DefaultOrder.Create;
+begin
+  Self.FOrderBy := emptyStr;
+end;
+
+{ PrimaryKey }
+
+constructor PrimaryKey.Create(aColumns: TArray<TPK>);
+var
+  iCol: Integer;
+begin
+  inherited Create;
+
+  for iCol := Low(aColumns) to High(aColumns) do
+    begin
+      SetLength(Self.FColumns, Length(Self.FColumns) + 1);
+      Self.FColumns[iCol] := aColumns[iCol];
+    end;
+end;
+
+constructor PrimaryKey.Create;
+begin
+  Self.FColumns := [];
+end;
+
+{ TPK }
+
+constructor TPK.Create(aColumn: string; aColType: TDBtype; aAutoGenerate : TGenerated;
+aSequenceType : TSequenceType);
+begin
+  inherited Create;
+
+  Self.FColumn := aColumn;
+  Self.FColType := aColType; 
+  Self.FAutoGenerate := aAutoGenerate;  
+  Self.FSequenceType := aSequenceType;
+end;
+
+end.

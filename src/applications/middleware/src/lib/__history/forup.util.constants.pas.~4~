@@ -1,0 +1,13 @@
+unit forup.util.constants;
+
+interface
+uses System.Classes, System.SysUtils, System.StrUtils, System.Math, System.Masks;
+
+const
+  EMPTYSTRING = '';
+  EMPTYDATE_BR = '  /  /    ';
+  EMPTYDATETIME_BR = Concat(EMPTYDATE_BR,'   :  :  ');
+
+implementation
+
+end.

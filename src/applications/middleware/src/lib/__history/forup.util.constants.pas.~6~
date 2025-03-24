@@ -1,0 +1,18 @@
+unit forup.util.constants;
+
+interface
+uses System.Classes, System.SysUtils, System.StrUtils, System.Math, System.Masks;
+
+const
+  EMPTYSTRING = '';
+  EMPTYDATE_BR = '  /  /    ';
+  EMPTYDATETIME_BR = Concat(EMPTYDATE_BR,'   :  :  ');
+
+type
+  TDBtype = (tdChar, tdInteger, tdDate, tdDateTime, tdTime, tdReal,
+    tdBoolean, tdPassword, tdBlob, tdImage, tdFile, tdOID);
+  TExtraAction = set of (doInsert, doUpdate, doSelect);
+
+implementation
+
+end.

@@ -1,0 +1,15 @@
+{
+	"name": "src",
+	"description": "",
+	"version": "1.0.0",
+	"homepage": "",
+	"mainsrc": "./src",
+	"projects": [],
+	"dependencies": {
+		"github.com/hashload/horse": "^3.1.6",
+		"github.com/hashload/horse-basic-auth": "^1.2.3",
+		"github.com/hashload/horse-cors": "^1.0.6",
+		"github.com/hashload/horse-octet-stream": "^1.9.11",
+		"github.com/hashload/jhonson": "^1.1.9"
+	}
+}

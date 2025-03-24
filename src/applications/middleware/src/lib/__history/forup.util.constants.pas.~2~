@@ -1,0 +1,8 @@
+unit forup.util.constants;
+
+interface
+uses System.Classes, System.SysUtils, System.StrUtils, System.Math, System.Masks;
+
+implementation
+
+end.
