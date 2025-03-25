@@ -63,12 +63,15 @@ type
     FPrecision: Integer;
     FDescription: string;
     FExtraActions : TExtraActions;
+    FRestrictions: TRestrictions;
   public
     constructor Create; overload;
     constructor Create(aColumnName: String; aFieldType: TDBtype); overload;
     constructor Create(aColumnName: String; aFieldType: TDBtype; aDescription: string = EMPTYSTRING); overload;
-    constructor Create(aColumnName: string; aFieldType: TDBtype; aSize: Integer; aDescription: string  = EMPTYSTRING; aExtraActions : TExtraActions = []); overload;
-    constructor Create(aColumnName: string; aFieldType: TDBtype; aPrecision, aScale: Integer; aDescription: string  = EMPTYSTRING; aExtraActions : TExtraActions = []); overload;
+    constructor Create(aColumnName: string; aFieldType: TDBtype; aSize: Integer; aDescription: string  = EMPTYSTRING; 
+      aExtraActions : TExtraActions = []; aRestrictions : TRestrictions = []); overload;
+    constructor Create(aColumnName: string; aFieldType: TDBtype; aPrecision, aScale: Integer; aDescription: string  = EMPTYSTRING; 
+      aExtraActions : TExtraActions = []; aRestrictions : TRestrictions = []); overload;
   published
     property ColumnName: String read FColumnName;
     property FieldType: TDBtype read FFieldType;
@@ -76,14 +79,27 @@ type
     property Scale: Integer read FScale;
     property Precision: Integer read FPrecision;
     property Description: string read FDescription;
-    property ExtraActions: TExtraActions read FExtraActions write FExtraActions;
+    property ExtraActions: TExtraActions read FExtraActions;
+    property Restrictions: TRestrictions read FRestrictions;
   end;
 
   Index = class(TCustomAttribute)
   private
     FName: string;
+    FColumnName: string;
+    FTableName: string;
+    FSchemaName: string;
+    FDefaultSort: TSortingOrder;
+  public
+    constructor Create; overload;
+    constructor Create(aName, aTableName, aColumnName : string; aDefaultSort : TSortingOrder = NoSort;
+      aSchemaName : string = EMPTYSTRING); overload;
   published
     property Name: string read FName;
+    property SchemaName: string read FSchemaName;
+    property TableName: string read FTableName;
+    property ColumnName: string read FColumnName;
+    property DefaultSort: TSortingOrder read FDefaultSort;
   end;
 
   PrimaryKey = class(TCustomAttribute)
@@ -158,6 +174,7 @@ begin
   FPrecision := 0;
   FDescription := EmptyStr;
   FExtraActions := [];
+  FRestrictions := [];
 end;
 
 constructor Column.Create(aColumnName: String; aFieldType: TDBtype);
@@ -177,7 +194,7 @@ begin
 end;
 
 constructor Column.Create(aColumnName: string; aFieldType: TDBtype;
-  aSize: Integer; aDescription: string; aExtraActions: TExtraActions);
+  aSize: Integer; aDescription: string; aExtraActions: TExtraActions; aRestrictions : TRestrictions);
 begin
   inherited Create;
   Self.FColumnName := aColumnName;
@@ -185,10 +202,11 @@ begin
   Self.FDescription := aDescription;
   Self.FSize := aSize;
   Self.FExtraActions := aExtraActions;
+  Self.FRestrictions := aRestrictions;
 end;
 
 constructor Column.Create(aColumnName: string; aFieldType: TDBtype; aPrecision,
-  aScale: Integer; aDescription: string; aExtraActions: TExtraActions);
+  aScale: Integer; aDescription: string; aExtraActions: TExtraActions; aRestrictions : TRestrictions);
 begin
   inherited Create;
   Self.FColumnName := aColumnName;
@@ -197,6 +215,7 @@ begin
   Self.FExtraActions := aExtraActions;
   Self.FPrecision := aPrecision;
   Self.FScale := aScale;
+  Self.FRestrictions := aRestrictions;
 end;
 
 { DefaultOrder }
@@ -241,7 +260,31 @@ begin
 
   Self.FColumn := aColumn;
   Self.FColType := aColType; 
-  Self.FAutoGenerate := aAutoGenerate;
+  Self.FAutoGenerate := aAutoGenerate;  
+  Self.FSequenceType := aSequenceType;
+end;
+
+{ Index }
+
+constructor Index.Create;
+begin
+  Self.FName := EmptyStr;
+  Self.FColumnName := EmptyStr;
+  Self.FTableName := EmptyStr;
+  Self.FSchemaName := EmptyStr;
+  Self.FDefaultSort := NoSort;
+end;
+
+constructor Index.Create(aName, aTableName, aColumnName: string;
+  aDefaultSort: TSortingOrder; aSchemaName: string);
+begin
+  inherited Create;
+
+  Self.FName := aName;
+  Self.FColumnName := aColumnName;
+  Self.FTableName := aTableName;
+  Self.FSchemaName := aSchemaName;
+  Self.FDefaultSort := aDefaultSort;
 end;
 
 end.

@@ -1,0 +1,83 @@
+unit core.sql.entity;
+
+interface
+uses System.Classes, System.Math, System.StrUtils, System.SysUtils, Generics.Collections,
+System.JSON, System.JSON.Builders, System.JSON.Converters, System.JSON.BSON, System.JSON.Types,
+forup.util.constants, core.sql.attributes, System.Rtti, System.TypInfo, System.Types;
+
+type
+  TBaseEntity = class(TObject)
+    private
+      class var FClassName : string;
+      function getTableName : string;
+      function getPKColumns : TDictionary<string, string>;
+      function getAllColmuns : string;
+      function getColumnsList : TStringList;
+      function getColumnsValues : TStringList;
+      function getColumnsAndValues : TDictionary<string, string>;
+      function getDDL : TStringList;
+    public
+      class procedure RegisterClass;
+      constructor CreateEntity;
+    published
+      property TableName : string read getTableName;
+      property PKColumns : TDictionary<string, string> read getPKColumns;
+      property AllColumns : string read getAllColmuns;
+      property ColumnsList : TStringList read getColumnsList;
+      property ColumnsValues : TStringList read getColumnsValues;
+      property ColumnsAndValues : TDictionary<string, string> read getColumnsAndValues;
+      property DDL : TStringList read getDDL;
+
+  end;
+
+
+implementation
+
+{ TBaseEntity }
+
+constructor TBaseEntity.CreateEntity;
+begin
+  inherited Create;
+end;
+
+function TBaseEntity.getAllColmuns: string;
+begin
+
+end;
+
+function TBaseEntity.getColumnsAndValues: TDictionary<string, string>;
+begin
+
+end;
+
+function TBaseEntity.getColumnsList: TStringList;
+begin
+
+end;
+
+function TBaseEntity.getColumnsValues: TStringList;
+begin
+
+end;
+
+function TBaseEntity.getDDL: TStringList;
+begin
+
+end;
+
+function TBaseEntity.getPKColumns: TDictionary<string, string>;
+begin
+
+end;
+
+function TBaseEntity.getTableName: string;
+begin
+
+end;
+
+class procedure TBaseEntity.RegisterClass;
+begin
+  Self.FClassName := Self.ClassName;
+end;
+
+end.

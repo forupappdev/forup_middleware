@@ -29,16 +29,15 @@ type
     FColType : TDBtype;
     FAutoGenerate: TGenerated;
     FSequenceType: TSequenceType;
-  public
+  public  
     constructor Create(aColumn : string; aColType : TDBtype; aAutoGenerate : TGenerated = Insert;
     aSequenceType : TSequenceType = GuidInc);
-  published
+  published    
     property Column: string read FColumn write FColumn;
     property ColType: TDBtype read FColType write FColType;
     property AutoGenerate: TGenerated read FAutoGenerate write FAutoGenerate;
     property SequenceType: TSequenceType read FSequenceType;
   end;
-
   
   Table = class(TCustomAttribute)
   private
@@ -127,18 +126,6 @@ type
 
 implementation
 uses forup.util.functions;
-
-{ TPK }
-constructor TPK.Create(aColumn: string; aColType: TDBtype; aAutoGenerate : TGenerated;
-aSequenceType : TSequenceType);
-begin
-  inherited Create;
-
-  Self.FColumn := aColumn;
-  Self.FColType := aColType;
-  Self.FAutoGenerate := aAutoGenerate;
-  Self.FSequenceType := aSequenceType;
-end;
 
 { Table }
 
@@ -265,7 +252,18 @@ begin
   Self.FColumns := [];
 end;
 
+{ TPK }
 
+constructor TPK.Create(aColumn: string; aColType: TDBtype; aAutoGenerate : TGenerated;
+aSequenceType : TSequenceType);
+begin
+  inherited Create;
+
+  Self.FColumn := aColumn;
+  Self.FColType := aColType; 
+  Self.FAutoGenerate := aAutoGenerate;  
+  Self.FSequenceType := aSequenceType;
+end;
 
 { Index }
 

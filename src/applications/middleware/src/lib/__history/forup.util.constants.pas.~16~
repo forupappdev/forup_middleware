@@ -1,0 +1,60 @@
+unit forup.util.constants;
+
+interface
+uses System.Classes, System.SysUtils, System.StrUtils, System.Math, System.Masks;
+
+const
+  EMPTYSTRING = '';
+  EMPTYDATE_BR = '  /  /    ';
+  EMPTYDATETIME_BR = Concat(EMPTYDATE_BR,'   :  :  ');
+  DEF_LIST_SEPARATOR = ',';
+  RANGE_INFO = '..';
+  _S = 'S';
+  _N = 'N';
+  INT_0 = 0;
+  INT_1 = 1;
+  _TRUE = 'TRUE';
+  _FALSE = 'FALSE';
+  _NULL = 'NULL';
+  DB_CONVERT_ERROR = 'DBCE';
+
+
+type
+  TDBtype = (tdChar, tdInteger, tdDate, tdDateTime, tdTime, tdReal,
+    tdBoolean, tdPassword, tdBlob, tdImage, tdFile, tdOID);
+  TExtraAction = (doNone, doInsert, doUpdate, doSelect, doValidate, doAll);
+  TExtraActions = set of TExtraAction;
+
+  {$M+}
+  TPK = class(TObject)
+  private
+    FColumn : string;
+    FColType : TDBtype;
+    FAutoGenerate: TGenerated;
+    FSequenceType: TSequenceType;
+  public
+    constructor Create(aColumn : string; aColType : TDBtype; aAutoGenerate : TGenerated = Insert;
+    aSequenceType : TSequenceType = GuidInc);
+  published
+    property Column: string read FColumn write FColumn;
+    property ColType: TDBtype read FColType write FColType;
+    property AutoGenerate: TGenerated read FAutoGenerate write FAutoGenerate;
+    property SequenceType: TSequenceType read FSequenceType;
+  end;
+
+implementation
+uses core.sql.attributes;
+
+{ TPK }
+constructor TPK.Create(aColumn: string; aColType: TDBtype; aAutoGenerate : TGenerated;
+aSequenceType : TSequenceType);
+begin
+  inherited Create;
+
+  Self.FColumn := aColumn;
+  Self.FColType := aColType;
+  Self.FAutoGenerate := aAutoGenerate;
+  Self.FSequenceType := aSequenceType;
+end;
+
+end.

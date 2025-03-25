@@ -25,6 +25,9 @@ type
   TExtraAction = (doNone, doInsert, doUpdate, doSelect, doValidate, doAll);
   TExtraActions = set of TExtraAction;
 
+
 implementation
+
+
 
 end.

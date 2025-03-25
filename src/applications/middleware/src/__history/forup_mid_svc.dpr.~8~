@@ -13,8 +13,7 @@ uses
   Horse.CORS,
   core.sql.attributes in 'sql_core\core.sql.attributes.pas',
   forup.util.functions in 'lib\forup.util.functions.pas',
-  forup.util.constants in 'lib\forup.util.constants.pas',
-  core.sql.entity in 'sql_core\core.sql.entity.pas';
+  forup.util.constants in 'lib\forup.util.constants.pas';
 
 begin
   try

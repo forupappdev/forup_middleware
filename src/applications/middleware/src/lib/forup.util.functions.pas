@@ -3,7 +3,7 @@ unit forup.util.functions;
 interface
 uses System.Rtti, System.TypInfo, System.JSON, System.JSON.Builders, System.JSON.Converters,
 System.Classes, System.StrUtils, System.Math, System.MaskUtils, System.Masks, System.DateUtils,
-Generics.Collections, forup.util.constants, System.SysUtils;
+Generics.Collections, forup.util.constants, System.SysUtils, System.Variants;
 
 type
   {Singleton Class - Multiple porpuse}
@@ -22,6 +22,7 @@ type
       class function getLine(aValues : TStrings; aSeparetor : char = DEF_LIST_SEPARATOR; aFormat : string = EMPTYSTRING) : string; overload;
       {End of List manipulation}
 
+
       {Database trasnform functions}
       class function db_string(aValue : string; aReturnNull : Boolean = false) : string;
       class function db_integer(aValue : string; aReturnNull : Boolean = false) : string; overload;
@@ -38,6 +39,12 @@ type
       class function db_boolean(aValue : integer; aReturnNull : Boolean = false) : string; overload;
       class function db_boolean(aValue : boolean; aReturnNull : Boolean = false) : string; overload;
       {End of Database trasnform}
+
+      {Validation Functions}
+      class function isValidDate(aDate : string) : Boolean;
+      class function isValidDateTime(aDate : string) : Boolean;
+      class function isValidTime(aDate : string) : Boolean;
+      {End of Validation Functions}
 
   end;
 
@@ -130,35 +137,131 @@ end;
 
 class function TFunctions.db_date(aValue: TDate; aReturnNull: Boolean): string;
 begin
-
+  if aValue = Null then
+    begin
+      if aReturnNull then
+        Result := _NULL
+      else
+        Result := DB_CONVERT_ERROR;
+    end
+  else
+    begin
+      Result := FormatDateTime('yyyy-mm-dd', aValue).QuotedString;
+    end;
 end;
 
 class function TFunctions.db_date(aValue: string; aReturnNull: Boolean): string;
+var
+  dtValue : TDateTime;
+  fs : TFormatSettings;
 begin
-
+  if aValue.IsEmpty then
+    begin
+      if aReturnNull then
+        Result := _NULL
+      else
+        Result := DB_CONVERT_ERROR;
+    end
+  else
+    begin
+      if isValidDate(aValue) then
+        begin
+          fs := TFormatSettings.Create;
+          dtValue := StrToDate(aValue, fs);
+          Result := FormatDateTime('yyyy-mm-dd', dtValue).QuotedString;
+        end
+      else
+        Result := DB_CONVERT_ERROR;
+    end;
 end;
 
 class function TFunctions.db_datetime(aValue: TDateTime;
   aReturnNull: Boolean): string;
 begin
-
+  if aValue = Null then
+    begin
+      if aReturnNull then
+        Result := _NULL
+      else
+        Result := DB_CONVERT_ERROR;
+    end
+  else
+    begin
+      Result := FormatDateTime('yyyy-mm-dd hh:mm:ss', aValue).QuotedString;
+    end;
 end;
 
 class function TFunctions.db_datetime(aValue: string;
   aReturnNull: Boolean): string;
+var
+  dtValue : TDateTime;
+  fs : TFormatSettings;
 begin
-
+  if aValue.IsEmpty then
+    begin
+      if aReturnNull then
+        Result := _NULL
+      else
+        Result := DB_CONVERT_ERROR;
+    end
+  else
+    begin
+      if isValidDate(aValue) then
+        begin
+          fs := TFormatSettings.Create;
+          dtValue := StrToDateTime(aValue, fs);
+          Result := FormatDateTime('yyyy-mm-dd hh:mm:ss', dtValue).QuotedString;
+        end
+      else
+        Result := DB_CONVERT_ERROR;
+    end;
 end;
 
 class function TFunctions.db_double(aValue: string;
   aReturnNull: Boolean): string;
+var
+  dblValue : Extended;
+  error : Boolean;
+  fs : TFormatSettings;
 begin
+  if aValue.IsEmpty then
+    begin
+      if aReturnNull then
+        begin
+          Result := _NULL;
+        end
+      else Result := DB_CONVERT_ERROR;
+    end
+  else
+    begin
+      error := False;
+      fs := TFormatSettings.Create;
 
+      try
+        if (Pos(fs.ThousandSeparator, aValue) > 0) then
+          aValue := aValue.Replace(fs.ThousandSeparator, '', [rfReplaceAll]);
+
+        dblValue := StrToFloat(aValue, fs);
+        fs.DecimalSeparator := '.';
+        Result := FloatToStr(dblValue, fs);
+      except
+        Result := DB_CONVERT_ERROR;
+      end;
+    end;
 end;
 
 class function TFunctions.db_double(aValue: Extended;
   aReturnNull: Boolean): string;
+var
+  fs : TFormatSettings;
 begin
+  try
+    fs := TFormatSettings.Create;
+    fs.DecimalSeparator := '.';
+    Result := FloatToStr(aValue, fs);
+  except
+    Result := DB_CONVERT_ERROR;
+  end;
 
 end;
 
@@ -193,13 +296,44 @@ begin
 end;
 
 class function TFunctions.db_time(aValue: string; aReturnNull: Boolean): string;
+var
+  dtValue : TDateTime;
+  fs : TFormatSettings;
 begin
+  if aValue.IsEmpty then
+    begin
+      if aReturnNull then
+        Result := _NULL
+      else
+        Result := DB_CONVERT_ERROR;
+    end
+  else
+    begin
+      if isValidDate(aValue) then
+        begin
+          fs := TFormatSettings.Create;
+          dtValue := StrToTime(aValue, fs);
+          Result := FormatDateTime('hh:mm:ss', dtValue).QuotedString;
+        end
+      else
+        Result := DB_CONVERT_ERROR;
+    end;
 
 end;
 
 class function TFunctions.db_time(aValue: TTime; aReturnNull: Boolean): string;
 begin
-
+  if aValue = Null then
+    begin
+      if aReturnNull then
+        Result := _NULL
+      else
+        Result := DB_CONVERT_ERROR;
+    end
+  else
+    begin
+      Result := FormatDateTime('hh:mm:ss', aValue).QuotedString;
+    end;
 end;
 
 class function TFunctions.GetFunctions: TFunctions;
@@ -228,6 +362,33 @@ begin
     begin
       Result := Format(aFormat, [Result]);
     end;
+end;
+
+class function TFunctions.isValidDate(aDate: string): Boolean;
+var
+  fs : TFormatSettings;
+  aValue : TDateTime;
+begin
+  fs := TFormatSettings.Create;
+  Result := TryStrToDate(aDate, aValue, fs);
+end;
+
+class function TFunctions.isValidDateTime(aDate: string): Boolean;
+var
+  fs : TFormatSettings;
+  aValue : TDateTime;
+begin
+  fs := TFormatSettings.Create;
+  Result := TryStrToDateTime(aDate, aValue, fs);
+end;
+
+class function TFunctions.isValidTime(aDate: string): Boolean;
+var
+  fs : TFormatSettings;
+  aValue : TDateTime;
+begin
+  fs := TFormatSettings.Create;
+  Result := TryStrToTime(aDate, aValue, fs);
 end;
 
 class function TFunctions.getLine(aValues: TArray<string>; aSeparetor: char;

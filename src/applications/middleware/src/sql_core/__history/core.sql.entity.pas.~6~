@@ -1,0 +1,33 @@
+unit core.sql.entity;
+
+interface
+uses System.Classes, System.Math, System.StrUtils, System.SysUtils, Generics.Collections,
+System.JSON, System.JSON.Builders, System.JSON.Converters, System.JSON.BSON, System.JSON.Types,
+forup.util.constants, System.Rtti, System.TypInfo, System.Types;
+
+type
+  TBaseEntity = class(TObject)
+    private
+      class var FClassName : string;
+    public
+      class procedure RegisterClass;
+      constructor CreateEntity;
+    published
+  end;
+
+
+implementation
+
+{ TBaseEntity }
+
+constructor TBaseEntity.CreateEntity;
+begin
+  inherited Create;
+end;
+
+class procedure TBaseEntity.RegisterClass;
+begin
+  Self.FClassName := Self.ClassName;
+end;
+
+end.
