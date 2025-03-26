@@ -3,7 +3,7 @@ unit forup.util.functions;
 interface
 uses System.Rtti, System.TypInfo, System.JSON, System.JSON.Builders, System.JSON.Converters,
 System.Classes, System.StrUtils, System.Math, System.MaskUtils, System.Masks, System.DateUtils,
-Generics.Collections, forup.util.constants, System.SysUtils, System.Variants;
+Generics.Collections, forup.util.constants, System.SysUtils, System.Variants, core.sql.attributes;
 
 type
   {Singleton Class - Multiple porpuse}
@@ -16,6 +16,12 @@ type
     public
       class procedure RegisterClass;
       class function GetFunctions : TFunctions;
+
+      {Helpers to Attribute work}
+      class function getAttribute<T : TCustomAttribute>(aObj : TObject) : T; overload;
+      class function getAttribute<T : TCustomAttribute>(aProp : TRttiProperty) : T; overload;
+      class function getColumnValue(aObj : TObject; aColumnName : string) : string;
+      {End Helpers to Attribute}
 
       {List manipulation}
       class function getLine(aValues : TArray<string>; aSeparetor : char = DEF_LIST_SEPARATOR; aFormat : string = EMPTYSTRING) : string; overload;
@@ -336,6 +342,49 @@ begin
     end;
 end;
 
+class function TFunctions.getAttribute<T>(aProp: TRttiProperty) : T;
+var
+  Attr : TCustomAttribute;
+begin
+  Result := nil;
+  try
+    for Attr in aProp.GetAttributes do
+      begin
+        if Attr is T then
+          begin
+            Result := T(Attr);
+            Break;
+          end;
+      end;
+  finally
+
+  end;
+end;
+
+class function TFunctions.getAttribute<T>(aObj: TObject)  : T;
+var
+  context : TRttiContext;
+  rtype : TRttiType;
+  Attr : TCustomAttribute;
+begin
+  Result := nil;
+  context := TRttiContext.Create;
+  try
+    rtype := context.GetType(aObj.ClassType);
+
+    for Attr in rtype.GetAttributes do
+      begin
+        if (Attr is T) then
+          begin
+            Result := T(Attr);
+            Break;
+          end;
+      end;
+  finally
+    context.Free;
+  end;
+end;
+
 class function TFunctions.GetFunctions: TFunctions;
 begin
   if not Assigned(Self.FInstance) then
@@ -362,6 +411,35 @@ begin
     begin
       Result := Format(aFormat, [Result]);
     end;
+end;
+
+class function TFunctions.getColumnValue(aObj : TObject; aColumnName : string) : string;
+var
+  context : TRttiContext;
+  rtype : TRttiType;
+  aProp : TRttiProperty;
+  aAttr : TCustomAttribute;
+begin
+  Result := EmptyStr;
+  context := TRttiContext.Create;
+  try
+    rtype := context.GetType(aObj.ClassType);
+    for aProp in rtype.GetProperties do
+      begin
+        for aAttr in aProp.GetAttributes do
+          begin
+            if (aAttr is Column) then
+              begin
+                if Column(aAttr).ColumnName.ToUpper = aColumnName.ToUpper then
+                  begin
+                    Result := aProp.GetValue(aObj).AsString;
+                  end;
+              end;
+          end;
+      end;
+  finally
+    context.Free;
+  end;
 end;
 
 class function TFunctions.isValidDate(aDate: string): Boolean;

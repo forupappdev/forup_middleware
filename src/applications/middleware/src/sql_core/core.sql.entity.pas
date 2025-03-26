@@ -6,15 +6,15 @@ System.JSON, System.JSON.Builders, System.JSON.Converters, System.JSON.BSON, Sys
 forup.util.constants, core.sql.attributes, System.Rtti, System.TypInfo, System.Types;
 
 type
+  {$M+}
   TBaseEntity = class(TObject)
     private
       class var FClassName : string;
       function getTableName : string;
       function getPKColumns : TDictionary<string, string>;
       function getAllColmuns : string;
-      function getColumnsList : TStringList;
-      function getColumnsValues : TStringList;
-      function getColumnsAndValues : TDictionary<string, string>;
+      function getColumnsList : TDictionary<string, TDBtype>;
+      function getColumnsValues : TDictionary<string, string>;
       function getDDL : TStringList;
     public
       class procedure RegisterClass;
@@ -23,16 +23,15 @@ type
       property TableName : string read getTableName;
       property PKColumns : TDictionary<string, string> read getPKColumns;
       property AllColumns : string read getAllColmuns;
-      property ColumnsList : TStringList read getColumnsList;
-      property ColumnsValues : TStringList read getColumnsValues;
-      property ColumnsAndValues : TDictionary<string, string> read getColumnsAndValues;
+      property ColumnsList : TDictionary<string, TDBtype> read getColumnsList;
+      property ColumnsValues : TDictionary<string, string> read getColumnsValues;
       property DDL : TStringList read getDDL;
 
   end;
 
 
 implementation
-
+uses forup.util.functions;
 { TBaseEntity }
 
 constructor TBaseEntity.CreateEntity;
@@ -41,38 +40,113 @@ begin
 end;
 
 function TBaseEntity.getAllColmuns: string;
+var
+  aColumns : TDictionary<string, TDBtype>;
+  aTableName : string;
+  aTotal : Integer;
+  I : Integer;
 begin
+  Result := '*';
+  aTableName := Self.TableName;
+  aColumns := Self.ColumnsList;
 
+  aTotal := aColumns.Count;
+  if aTotal > 0 then
+    begin
+      Result := EMPTYSTRING;
+      for I := 0 to (aTotal-1) do
+        begin
+          Result := concat(aTableName,
+            IfThen(aTableName.IsEmpty,EmptyStr,'.'),
+            aColumns.Keys.ToArray[I],
+            IfThen(I < (aTotal-1),',',EmptyStr));
+        end;
+    end;
 end;
 
-function TBaseEntity.getColumnsAndValues: TDictionary<string, string>;
+function TBaseEntity.getColumnsList: TDictionary<string, TDBtype>;
+var
+  context : TRttiContext;
+  rtype : TRttiType;
+  aProp : TRttiProperty;
+  colAttr : Column;
 begin
+  Result := TDictionary<string, TDBtype>.Create;
+  context := TRttiContext.Create;
 
+  try
+    rtype := context.GetType(Self.ClassType);
+    for aProp in rtype.GetProperties do
+      begin
+        colAttr := TFunctions.getAttribute<Column>(aProp);
+        if Assigned(colAttr) then
+          begin
+            Result.Add(colAttr.ColumnName, colAttr.FieldType);
+          end;
+      end;
+
+  finally
+    context.Free;
+  end;
 end;
 
-function TBaseEntity.getColumnsList: TStringList;
+function TBaseEntity.getColumnsValues : TDictionary<string, string>;
+var
+  context : TRttiContext;
+  rtype : TRttiType;
+  aProp : TRttiProperty;
+  colAttr : Column;
 begin
+  Result := TDictionary<string, string>.Create;
+  context := TRttiContext.Create;
 
-end;
+  try
+    rtype := context.GetType(Self.ClassType);
+    for aProp in rtype.GetProperties do
+      begin
+        colAttr := TFunctions.getAttribute<Column>(aProp);
+        if Assigned(colAttr) then
+          begin
+            Result.Add(colAttr.ColumnName, aProp.GetValue(Self).AsString);
+          end;
+      end;
 
-function TBaseEntity.getColumnsValues: TStringList;
-begin
-
+  finally
+    context.Free;
+  end;
 end;
 
 function TBaseEntity.getDDL: TStringList;
 begin
-
+  Result := TStringList.Create;
 end;
 
 function TBaseEntity.getPKColumns: TDictionary<string, string>;
+var
+  PKs : PrimaryKey;
+  aPK : TPK;
 begin
-
+  PKs := TFunctions.GetFunctions.getAttribute<PrimaryKey>(Self);
+  Result := TDictionary<string, string>.Create;
+  if Assigned(PKs) then
+    begin
+      for aPK in PKs.Columns do
+        begin
+          Result.Add(aPK.Column,
+                     TFunctions.GetFunctions.getColumnValue(Self, aPK.Column));
+        end;
+    end;
 end;
 
 function TBaseEntity.getTableName: string;
+var
+  tableAttr : Table;
 begin
+  Result := EmptyStr;
+  tableAttr := TFunctions.GetFunctions.getAttribute<Table>(Self);
 
+  if Assigned(tableAttr) then
+    Result := tableAttr.Name;
 end;
 
 class procedure TBaseEntity.RegisterClass;

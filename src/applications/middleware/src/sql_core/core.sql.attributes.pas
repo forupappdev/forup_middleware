@@ -23,7 +23,7 @@ type
   {End Types needed}
 
   {$M+}
-  TPK = class(TObject)
+  TPK = class(TCustomAttribute)
   private
     FColumn : string;
     FColType : TDBtype;
