@@ -1,3 +1,10 @@
+CREATE SCHEMA authservice AUTHORIZATION postgres;
+
+CREATE ROLE forup_db_admin SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN REPLICATION BYPASSRLS PASSWORD 'N45fg98sd$@!';
+COMMENT ON ROLE forup_db_admin IS 'ForUp Database Administrator';
+
+GRANT CREATE, USAGE ON SCHEMA authservice TO forup_db_admin;
+
 CREATE TABLE authservice.login (
 	id uuid DEFAULT gen_random_uuid() NOT NULL,
 	email varchar(200) NOT NULL,
