@@ -21,8 +21,8 @@ CREATE INDEX login_email_idx ON authservice.login (email);
 CREATE TABLE authservice.conn_profile (
 	id uuid DEFAULT gen_random_uuid() NOT NULL,
 	client_id uuid NOT NULL,
-	modules json NULL,
-	db_access json NULL,
+	modules JSONB NULL,
+	db_access JSONB NULL,
 	CONSTRAINT conn_profile_pk PRIMARY KEY (id)
 );
 
@@ -32,7 +32,7 @@ CREATE TABLE authservice.client (
 	organization_name varchar(255) NULL,
 	doc_number varchar(30) NULL,
 	contact_email varchar(255) NULL,
-    "address" json NULL
+    "address" JSONB NULL
 	CONSTRAINT client_pk PRIMARY KEY (id)
 );
 

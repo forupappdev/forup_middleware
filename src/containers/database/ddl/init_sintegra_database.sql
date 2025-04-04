@@ -143,3 +143,127 @@ FOR EACH ROW EXECUTE FUNCTION atualizar_editadoem();
 CREATE TRIGGER trg_cliente_update
 BEFORE UPDATE ON sintegra_module.cliente
 FOR EACH ROW EXECUTE FUNCTION atualizar_editadoem();
+
+create table sintegra_module.produto(
+	id UUID DEFAULT gen_random_uuid() NOT NULL,
+	cliente_id uuid,
+	iderp varchar(50) not null,
+	codigointerno integer null,
+	cfoppadrao varchar(4) null,
+	ncm varchar(10) null,
+	cest varchar(10) null,
+	nome varchar(255) not null,
+	apres varchar(15) null,
+	jsonerp JSONB NULL DEFAULT '{}',
+    criadoem TIMESTAMP DEFAULT NOW(),
+    editadoem TIMESTAMP DEFAULT NOW(),
+
+    CONSTRAINT produto_pk PRIMARY KEY (id),
+    CONSTRAINT produto_cliente_fk FOREIGN KEY (cliente_id) REFERENCES sintegra_module.cliente (id) ON DELETE SET NULL
+);
+CREATE INDEX idx_produto_codigointerno ON sintegra_module.produto (codigointerno);
+CREATE INDEX idx_produto_nome ON sintegra_module.produto (nome);
+CREATE INDEX idx_produto_iderp ON sintegra_module.produto (iderp);
+CREATE TRIGGER trg_produto_update
+BEFORE UPDATE ON sintegra_module.produto
+FOR EACH ROW EXECUTE FUNCTION atualizar_editadoem();
+
+
+CREATE TABLE sintegra_module.notafiscalitem (
+    id UUID DEFAULT gen_random_uuid() NOT NULL,
+    notafiscal_id uuid,
+    produto_id uuid,
+    idproderp varchar(50) not null,
+    cfop varchar(4) null,
+    ncm varchar(10) null, 
+    cest varchar(10) null,
+    nome varchar(255) null,
+    aliqipi numeric(15,4) null default 0.0000,
+    aliqicms numeric(15,4) null default 0.0000,
+    icmsdesonerado numeric(15,4) null default 0.0000,
+    icmsstbasecalc numeric(15,4) null default 0.0000,
+    icmsbasecalc numeric(15,4) null default 0.0000,
+    icmsvalor numeric(15,4) null default 0.0000,
+    ipivalor numeric(15,4) null default 0.0000,
+    icmssituacaotributaria varchar(10) null,
+    qtde numeric(15,4) null default 0.0000,
+    qtdeporpacote numeric(15,4) null default 0.0000,
+    valortotal numeric(15,4) null default 0.0000,
+    desctontototal numeric(15,4) null default 0.0000,  
+    
+    
+    jsonerp JSONB NULL DEFAULT '{}',
+    criadoem TIMESTAMP DEFAULT NOW(),
+    editadoem TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT notafiscalitem_pk PRIMARY KEY (id),
+    CONSTRAINT notafiscalitem_notafiscal_fk FOREIGN KEY (notafiscal_id) REFERENCES sintegra_module.notafiscal (id) ON DELETE SET null,
+    CONSTRAINT notafiscalitem_produto_fk FOREIGN KEY (produto_id) REFERENCES sintegra_module.produto (id) ON DELETE SET null
+);
+CREATE INDEX idx_notafiscalitem_cfop ON sintegra_module.notafiscalitem (cfop);
+CREATE INDEX idx_notafiscalitem_nome ON sintegra_module.notafiscalitem (nome);
+CREATE INDEX idx_notafiscalitem_ncm ON sintegra_module.notafiscalitem (ncm);
+CREATE TRIGGER trg_notafiscalitem_update
+BEFORE UPDATE ON sintegra_module.notafiscalitem
+FOR EACH ROW EXECUTE FUNCTION atualizar_editadoem();
+
+create table sintegra_module.venda(
+	id UUID DEFAULT gen_random_uuid() NOT NULL,
+	cliente_id uuid,
+	notafiscal_id uuid null,
+	iderp varchar(50) not null,
+	codigointerno integer null,
+	cfoppadrao varchar(4) null,
+	valortotal numeric(15,4) default 0,
+	desctontototal numeric(15,4) default 0,
+	
+	jsonerp JSONB NULL DEFAULT '{}',
+    criadoem TIMESTAMP DEFAULT NOW(),
+    editadoem TIMESTAMP DEFAULT NOW(),
+
+    CONSTRAINT venda_pk PRIMARY KEY (id),
+    CONSTRAINT venda_cliente_fk FOREIGN KEY (cliente_id) REFERENCES sintegra_module.cliente (id) ON DELETE SET NULL
+);
+CREATE INDEX idx_venda_codigointerno ON sintegra_module.venda (codigointerno);
+CREATE INDEX idx_venda_cfoppadrao ON sintegra_module.venda (cfoppadrao);
+CREATE INDEX idx_venda_iderp ON sintegra_module.venda (iderp);
+CREATE TRIGGER trg_venda_update
+BEFORE UPDATE ON sintegra_module.venda
+FOR EACH ROW EXECUTE FUNCTION atualizar_editadoem();
+
+
+CREATE TABLE sintegra_module.vendaproduto (
+    id UUID DEFAULT gen_random_uuid() NOT NULL,
+    venda_id uuid,
+    produto_id uuid,
+    idproderp varchar(50) not null,
+    cfop varchar(4) null,
+    ncm varchar(10) null, 
+    cest varchar(10) null,
+    nome varchar(255) null,
+    aliqipi numeric(15,4) null default 0.0000,
+    aliqicms numeric(15,4) null default 0.0000,
+    icmsdesonerado numeric(15,4) null default 0.0000,
+    icmsstbasecalc numeric(15,4) null default 0.0000,
+    icmsbasecalc numeric(15,4) null default 0.0000,
+    icmsvalor numeric(15,4) null default 0.0000,
+    ipivalor numeric(15,4) null default 0.0000,
+    icmssituacaotributaria varchar(10) null,
+    qtde numeric(15,4) null default 0.0000,
+    qtdeporpacote numeric(15,4) null default 0.0000,
+    valortotal numeric(15,4) null default 0.0000,
+    desctontototal numeric(15,4) null default 0.0000,  
+    
+    
+    jsonerp JSONB NULL DEFAULT '{}',
+    criadoem TIMESTAMP DEFAULT NOW(),
+    editadoem TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT vendaproduto_pk PRIMARY KEY (id),
+    CONSTRAINT vendaproduto_notafiscal_fk FOREIGN KEY (venda_id) REFERENCES sintegra_module.venda (id) ON DELETE SET null,
+    CONSTRAINT vendaproduto_produto_fk FOREIGN KEY (produto_id) REFERENCES sintegra_module.produto (id) ON DELETE SET null
+);
+CREATE INDEX idx_vendaproduto_cfop ON sintegra_module.vendaproduto (cfop);
+CREATE INDEX idx_vendaproduto_nome ON sintegra_module.vendaproduto (nome);
+CREATE INDEX idx_vendaproduto_ncm ON sintegra_module.vendaproduto (ncm);
+CREATE TRIGGER trg_vendaproduto_update
+BEFORE UPDATE ON sintegra_module.vendaproduto
+FOR EACH ROW EXECUTE FUNCTION atualizar_editadoem();
