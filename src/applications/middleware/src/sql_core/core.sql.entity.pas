@@ -19,6 +19,7 @@ type
       function getColumnsValues : TDictionary<string, string>;
       function getDDL : TStringList;
       function getInsertFields : string;
+      function getColumnAttribute<T : TCustomAttribute>(aColName : String) : T;
     public
       class procedure RegisterClass;
       constructor CreateEntity;
@@ -70,6 +71,48 @@ begin
     end;
 end;
 
+function TBaseEntity.getColumnAttribute<T>(aColName: String): T;
+var
+  context : TRttiContext;
+  rtype : TRttiType;
+  aProp : TRttiProperty;
+  aAttribute : TCustomAttribute;
+begin
+  context := TRttiContext.Create;
+  Result := nil;
+  try
+    rtype := context.GetType(Self.ClassType);
+    Result := nil;
+    if rtype <> nil then
+      begin
+        for aProp in rtype.GetProperties do
+          begin
+            if UpperCase(aProp.Name).Equals(aColName.ToUpper) then
+              begin
+                for aAttribute in aProp.GetAttributes do
+                  begin
+                    if aAttribute is T then
+                      begin
+                        Result := T(aAttribute);
+                        break;
+                      end;
+                  end;
+                break;
+              end;
+          end;
+      end
+    else raise Exception.Create('[BaseEntity][getColumnAttribute][No property found for the object "'+Self.UnitName+'"]');
+
+    if Result = nil then
+      begin
+        raise Exception.Create('[BaseEntity][getColumnAttribute][No property found named "'+aColName+'" '+
+        'or Attribute Type not defined.]');
+      end;
+  except
+    //Log Exception
+  end;
+end;
+
 function TBaseEntity.getColumnsList: TDictionary<string, TDBtype>;
 var
   context : TRttiContext;
@@ -102,6 +145,7 @@ var
   rtype : TRttiType;
   aProp : TRttiProperty;
   colAttr : Column;
+  allowNull : Boolean;
 begin
   Result := TDictionary<string, string>.Create;
   context := TRttiContext.Create;
@@ -113,7 +157,28 @@ begin
         colAttr := TFunctions.getAttribute<Column>(aProp);
         if Assigned(colAttr) then
           begin
-            Result.Add(colAttr.ColumnName, aProp.GetValue(Self).AsString);
+            allowNull := not (NotNull in colAttr.Restrictions);
+            case colAttr.FieldType of
+              tdChar: Result.Add(colAttr.ColumnName, aProp.GetValue(Self).AsString);
+              tdInteger: Result.Add(colAttr.ColumnName, aProp.GetValue(Self).AsString);
+              tdDate:
+                Result.Add(colAttr.ColumnName,
+                  TFunctions.GetFunctions.db_date(aProp.GetValue(Self).AsString, allowNull));
+              tdDateTime: Result.Add(colAttr.ColumnName,
+                  TFunctions.GetFunctions.db_datetime(aProp.GetValue(Self).AsString, allowNull));
+              tdTime: Result.Add(colAttr.ColumnName,
+                  TFunctions.GetFunctions.db_time(aProp.GetValue(Self).AsString, allowNull));
+              tdReal: Result.Add(colAttr.ColumnName,
+                  TFunctions.GetFunctions.db_double(aProp.GetValue(Self).AsString, allowNull));
+              tdBoolean: Result.Add(colAttr.ColumnName,
+                  TFunctions.GetFunctions.db_boolean(aProp.GetValue(Self).AsString, allowNull));
+              tdPassword: Result.Add(colAttr.ColumnName,
+                  TFunctions.GetFunctions.db_string(aProp.GetValue(Self).AsString, allowNull));
+              tdBlob: ;//Need to Analyse how to do this kind of type.
+              tdImage: ;//Need to Analyse how to do this kind of type.
+              tdFile: ;//Need to Analyse how to do this kind of type.
+              tdOID: ;//Need to Analyse how to do this kind of type.
+            end;
           end;
       end;
 
@@ -132,6 +197,7 @@ var
   insertCols : TStringList;
   aCol : TPair<string, TDBtype>;
   aPK : TPK;
+  aAttrCol : Column;
 begin
   insertCols := TStringList.Create;
   with TFunctions.GetFunctions.getAttribute<PrimaryKey>(Self) do
@@ -148,8 +214,20 @@ begin
 
   for aCol in Self.ColumnsList do
     begin
-
+      aAttrCol := getColumnAttribute<Column>(aCol.Key);
+      if aAttrCol <> nil then
+        begin
+          if ([TExtraAction.doInsert, TExtraAction.doAll] <= aAttrCol.ExtraActions) then
+            begin
+              if not ([noInsert] <= aAttrCol.Restrictions) then
+                begin
+                  insertCols.Add(aCol.Key);
+                end;
+            end;
+        end;
     end;
+
+  Result := TFunctions.GetFunctions.getLine(insertCols);
 end;
 
 function TBaseEntity.getPKColumns: TDictionary<string, string>;

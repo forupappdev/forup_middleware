@@ -80,13 +80,15 @@ end;
 function TSQLBuilder.getInsertCMD: WideString;
 var
   final_cmd : WideString;
+
 begin
   try
     if EntityFound(INFO_INSERTCMD) then
       begin
         final_cmd := Format(INSERT_SCOPE,[
           Self._BaseEntity.TableName,
-          Self._BaseEntity.
+          Self._BaseEntity.InsrtFields,
+          ''
         ]);
         Result := final_cmd;
       end

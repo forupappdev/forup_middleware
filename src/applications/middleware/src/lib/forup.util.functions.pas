@@ -20,7 +20,9 @@ type
       {Helpers to Attribute work}
       class function getAttribute<T : TCustomAttribute>(aObj : TObject) : T; overload;
       class function getAttribute<T : TCustomAttribute>(aProp : TRttiProperty) : T; overload;
+
       class function getColumnValue(aObj : TObject; aColumnName : string) : string;
+
       {End Helpers to Attribute}
 
       {List manipulation}
