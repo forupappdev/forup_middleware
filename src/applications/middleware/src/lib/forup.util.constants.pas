@@ -17,9 +17,11 @@ const
   _FALSE = 'FALSE';
   _NULL = 'NULL';
   DB_CONVERT_ERROR = 'DBCE';
+  SEPARATOR = ' ';
 
 
 type
+  TConnType = (ctNone, ctPostgreSQL, ctORACLE, ctSQLServer, ctMySQL, ctSQLite, ctFirebird);
   TDBtype = (tdChar, tdInteger, tdDate, tdDateTime, tdTime, tdReal,
     tdBoolean, tdPassword, tdBlob, tdImage, tdFile, tdOID);
   TExtraAction = (doNone, doInsert, doUpdate, doSelect, doValidate, doAll);

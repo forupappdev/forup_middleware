@@ -208,6 +208,8 @@
         <DCCReference Include="lib\forup.util.functions.pas"/>
         <DCCReference Include="lib\forup.util.constants.pas"/>
         <DCCReference Include="sql_core\core.sql.entity.pas"/>
+        <DCCReference Include="sql_core\core.sql.builder.pas"/>
+        <DCCReference Include="lib\forup.util.types.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

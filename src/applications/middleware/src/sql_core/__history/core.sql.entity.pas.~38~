@@ -130,7 +130,7 @@ end;
 function TBaseEntity.getInsertFields: string;
 var
   insertCols : TStringList;
-  aCol : TPair<string, TDBtype>;
+  aCol : Column;
   aPK : TPK;
 begin
   insertCols := TStringList.Create;
@@ -146,10 +146,7 @@ begin
         end;
     end;
 
-  for aCol in Self.ColumnsList do
-    begin
 
-    end;
 end;
 
 function TBaseEntity.getPKColumns: TDictionary<string, string>;

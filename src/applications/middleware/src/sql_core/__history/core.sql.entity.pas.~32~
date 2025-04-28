@@ -6,6 +6,7 @@ System.JSON, System.JSON.Builders, System.JSON.Converters, System.JSON.BSON, Sys
 forup.util.constants, core.sql.attributes, System.Rtti, System.TypInfo, System.Types;
 
 type
+  {$M+}
   TBaseEntity = class(TObject)
     private
       class var FClassName : string;
@@ -57,11 +58,10 @@ begin
         begin
           Result := concat(aTableName,
             IfThen(aTableName.IsEmpty,EmptyStr,'.'),
-            aColumns.Keys.ToArray[I])
+            aColumns.Keys.ToArray[I],
+            IfThen(I < (aTotal-1),',',EmptyStr));
         end;
     end;
-
-
 end;
 
 function TBaseEntity.getColumnsList: TDictionary<string, TDBtype>;
@@ -118,7 +118,7 @@ end;
 
 function TBaseEntity.getDDL: TStringList;
 begin
-
+  Result := TStringList.Create;
 end;
 
 function TBaseEntity.getPKColumns: TDictionary<string, string>;

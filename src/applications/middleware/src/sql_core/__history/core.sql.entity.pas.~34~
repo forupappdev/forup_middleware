@@ -3,10 +3,13 @@ unit core.sql.entity;
 interface
 uses System.Classes, System.Math, System.StrUtils, System.SysUtils, Generics.Collections,
 System.JSON, System.JSON.Builders, System.JSON.Converters, System.JSON.BSON, System.JSON.Types,
-forup.util.constants, core.sql.attributes, System.Rtti, System.TypInfo, System.Types;
+forup.util.constants, core.sql.attributes, System.Rtti, System.TypInfo, System.Types, forup.util.types;
 
 type
+  {$M+}
   TBaseEntity = class(TObject)
+    protected
+      FBaseCriteria: TDBCriteria;
     private
       class var FClassName : string;
       function getTableName : string;
@@ -14,7 +17,6 @@ type
       function getAllColmuns : string;
       function getColumnsList : TDictionary<string, TDBtype>;
       function getColumnsValues : TDictionary<string, string>;
-      function getColumnsAndValues : TDictionary<string, string>;
       function getDDL : TStringList;
     public
       class procedure RegisterClass;
@@ -23,10 +25,10 @@ type
       property TableName : string read getTableName;
       property PKColumns : TDictionary<string, string> read getPKColumns;
       property AllColumns : string read getAllColmuns;
-      property ColumnsList : TDictionary<string, TDBtype>; read getColumnsList;
+      property ColumnsList : TDictionary<string, TDBtype> read getColumnsList;
       property ColumnsValues : TDictionary<string, string> read getColumnsValues;
-      property ColumnsAndValues : TDictionary<string, string> read getColumnsAndValues;
       property DDL : TStringList read getDDL;
+      property BaseCriteria: TDBCriteria read FBaseCriteria write FBaseCriteria;
 
   end;
 
@@ -38,24 +40,35 @@ uses forup.util.functions;
 constructor TBaseEntity.CreateEntity;
 begin
   inherited Create;
+  Self.FBaseCriteria := TDBCriteria.Create();
 end;
 
 function TBaseEntity.getAllColmuns: string;
+var
+  aColumns : TDictionary<string, TDBtype>;
+  aTableName : string;
+  aTotal : Integer;
+  I : Integer;
 begin
+  Result := '*';
+  aTableName := Self.TableName;
+  aColumns := Self.ColumnsList;
 
+  aTotal := aColumns.Count;
+  if aTotal > 0 then
+    begin
+      Result := EMPTYSTRING;
+      for I := 0 to (aTotal-1) do
+        begin
+          Result := concat(aTableName,
+            IfThen(aTableName.IsEmpty,EmptyStr,'.'),
+            aColumns.Keys.ToArray[I],
+            IfThen(I < (aTotal-1),',',EmptyStr));
+        end;
+    end;
 end;
 
-function TBaseEntity.getColumnsAndValues: TDictionary<string, string>;
-begin
-
-end;
-
-function TBaseEntity.getColumnsList: TStringList;
-begin
-
-end;
-
-function TBaseEntity.getColumnsValues : TDictionary<string, TDBtype>;
+function TBaseEntity.getColumnsList: TDictionary<string, TDBtype>;
 var
   context : TRttiContext;
   rtype : TRttiType;
@@ -72,7 +85,33 @@ begin
         colAttr := TFunctions.getAttribute<Column>(aProp);
         if Assigned(colAttr) then
           begin
-            Result.Add(colAttr.ColumnName, )
+            Result.Add(colAttr.ColumnName, colAttr.FieldType);
+          end;
+      end;
+
+  finally
+    context.Free;
+  end;
+end;
+
+function TBaseEntity.getColumnsValues : TDictionary<string, string>;
+var
+  context : TRttiContext;
+  rtype : TRttiType;
+  aProp : TRttiProperty;
+  colAttr : Column;
+begin
+  Result := TDictionary<string, string>.Create;
+  context := TRttiContext.Create;
+
+  try
+    rtype := context.GetType(Self.ClassType);
+    for aProp in rtype.GetProperties do
+      begin
+        colAttr := TFunctions.getAttribute<Column>(aProp);
+        if Assigned(colAttr) then
+          begin
+            Result.Add(colAttr.ColumnName, aProp.GetValue(Self).AsString);
           end;
       end;
 
@@ -83,7 +122,7 @@ end;
 
 function TBaseEntity.getDDL: TStringList;
 begin
-
+  Result := TStringList.Create;
 end;
 
 function TBaseEntity.getPKColumns: TDictionary<string, string>;

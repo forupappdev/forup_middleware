@@ -3,10 +3,13 @@ unit core.sql.entity;
 interface
 uses System.Classes, System.Math, System.StrUtils, System.SysUtils, Generics.Collections,
 System.JSON, System.JSON.Builders, System.JSON.Converters, System.JSON.BSON, System.JSON.Types,
-forup.util.constants, core.sql.attributes, System.Rtti, System.TypInfo, System.Types;
+forup.util.constants, core.sql.attributes, System.Rtti, System.TypInfo, System.Types, forup.util.types;
 
 type
+  {$M+}
   TBaseEntity = class(TObject)
+    protected
+      FBaseCriteria: TDBCriteria;
     private
       class var FClassName : string;
       function getTableName : string;
@@ -25,6 +28,7 @@ type
       property ColumnsList : TDictionary<string, TDBtype> read getColumnsList;
       property ColumnsValues : TDictionary<string, string> read getColumnsValues;
       property DDL : TStringList read getDDL;
+      property BaseCriteria: TDBCriteria read FBaseCriteria write FBaseCriteria;
 
   end;
 
@@ -117,7 +121,7 @@ end;
 
 function TBaseEntity.getDDL: TStringList;
 begin
-
+  Result := TStringList.Create;
 end;
 
 function TBaseEntity.getPKColumns: TDictionary<string, string>;

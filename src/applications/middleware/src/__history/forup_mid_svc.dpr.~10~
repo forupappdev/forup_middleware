@@ -14,9 +14,7 @@ uses
   core.sql.attributes in 'sql_core\core.sql.attributes.pas',
   forup.util.functions in 'lib\forup.util.functions.pas',
   forup.util.constants in 'lib\forup.util.constants.pas',
-  core.sql.entity in 'sql_core\core.sql.entity.pas',
-  core.sql.builder in 'sql_core\core.sql.builder.pas',
-  forup.util.types in 'lib\forup.util.types.pas';
+  core.sql.entity in 'sql_core\core.sql.entity.pas';
 
 begin
   try

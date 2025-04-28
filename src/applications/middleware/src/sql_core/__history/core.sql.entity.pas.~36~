@@ -128,28 +128,8 @@ begin
 end;
 
 function TBaseEntity.getInsertFields: string;
-var
-  insertCols : TStringList;
-  aCol : TPair<string, TDBtype>;
-  aPK : TPK;
 begin
-  insertCols := TStringList.Create;
-  with TFunctions.GetFunctions.getAttribute<PrimaryKey>(Self) do
-    begin
-      for aPK in Columns do
-        begin
-          if (aPK.AutoGenerate in [TGenerated.Always, TGenerated.Insert]) and
-             (aPK.SequenceType in [TSequenceType.NotInc]) then
-            begin
-              insertCols.Add(aPK.Column);
-            end;
-        end;
-    end;
 
-  for aCol in Self.ColumnsList do
-    begin
-
-    end;
 end;
 
 function TBaseEntity.getPKColumns: TDictionary<string, string>;

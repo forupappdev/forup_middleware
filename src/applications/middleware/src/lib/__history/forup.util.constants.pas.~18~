@@ -7,6 +7,17 @@ const
   EMPTYSTRING = '';
   EMPTYDATE_BR = '  /  /    ';
   EMPTYDATETIME_BR = Concat(EMPTYDATE_BR,'   :  :  ');
+  DEF_LIST_SEPARATOR = ',';
+  RANGE_INFO = '..';
+  _S = 'S';
+  _N = 'N';
+  INT_0 = 0;
+  INT_1 = 1;
+  _TRUE = 'TRUE';
+  _FALSE = 'FALSE';
+  _NULL = 'NULL';
+  DB_CONVERT_ERROR = 'DBCE';
+
 
 type
   TDBtype = (tdChar, tdInteger, tdDate, tdDateTime, tdTime, tdReal,
@@ -14,6 +25,9 @@ type
   TExtraAction = (doNone, doInsert, doUpdate, doSelect, doValidate, doAll);
   TExtraActions = set of TExtraAction;
 
+
 implementation
+
+
 
 end.
