@@ -1,0 +1,322 @@
+unit forup.util.types;
+
+interface
+uses System.StrUtils, System.SysUtils, System.Masks, System.MaskUtils, System.Math, System.DateUtils,
+Generics.Collections, System.TypInfo, System.Types, System.IOUtils, System.IniFiles, System.Classes,
+System.Rtti, JSON, JSON.BSON, JSON.Builders, JSON.Converters,forup.util.constants;
+
+type
+  TCriterion = class(TObject)
+  private
+    FFieldName: string;
+    FOperatorValue: string;
+    FFieldValue: string;
+    FNextOperation: string;
+
+    function getInlineCriterion : string;
+  public
+    constructor Create(AFieldName : string = ''; AOperatorValue : string = '';
+      AFieldValue : string = ''; ANextOperation : string = '');
+  published
+    property FieldName: string read FFieldName write FFieldName;
+    property OperatorValue: string read FOperatorValue write FOperatorValue;
+    property FieldValue: string read FFieldValue write FFieldValue;
+    property NextOperation: string read FNextOperation write FNextOperation;
+    property InlineCriterion : string read getInlineCriterion;
+  end;
+
+  TDBCriteria = class(TObject)
+  private
+    FCriteriaBuilt: TStringList;
+    FOrderBy: string;
+    FGroupBy: string;
+    FHaving: string;
+
+    FCriteria : TList<TCriterion>;
+
+    function BuildCriteria : TStringList;
+
+  public
+    constructor Create(aCriteria : TArray<TCriterion> = []; aOrder : string = ''; aGroup : string = '';
+      aHaving : string = '');
+    function getCriterionByField(aField : string) : TCriterion;
+    function hasCriterion(aCrit : TCriterion) : Boolean;
+    procedure Clear;
+    procedure CelarField(aField : string);
+    procedure Append(aFrom : TDBCriteria);
+    procedure CopyFrom(aFrom : TDBCriteria);
+    procedure AppendTo(aDest : TDBCriteria);
+    procedure CopyTo(aDest : TDBCriteria);
+
+  published
+    property Criteria: TList<TCriterion> read FCriteria write FCriteria;
+    property OrderBy: string read FOrderBy write FOrderBy;
+    property GroupBy: string read FGroupBy write FGroupBy;
+    property Having: string read FHaving write FHaving;
+    property CriteriaBuilt: TStringList read BuildCriteria;
+  end;
+
+
+implementation
+
+{ TDBCriteria }
+
+procedure TDBCriteria.Append(aFrom: TDBCriteria);
+var
+  newCrit : TCriterion;
+begin
+  if Assigned(aFrom) then
+    begin
+      if aFrom.Criteria.Count > 0 then
+        begin
+          for newCrit in aFrom.Criteria do
+            begin
+              if not Self.hasCriterion(newCrit) then
+                Self.FCriteria.Add(newCrit);
+            end;
+        end;
+
+      if aFrom.OrderBy <> EMPTYSTRING then
+        begin
+          Self.FOrderBy := concat(Self.FOrderBy,
+          IfThen(Self.FOrderBy.IsEmpty,EMPTYSTRING,DEF_LIST_SEPARATOR),
+          aFrom.OrderBy);
+        end;
+
+      if aFrom.GroupBy <> EMPTYSTRING then
+        begin
+          Self.FGroupBy := concat(Self.FGroupBy,
+          IfThen(Self.FGroupBy.IsEmpty,EMPTYSTRING,DEF_LIST_SEPARATOR),
+          aFrom.GroupBy);
+        end;
+
+      if aFrom.Having <> EMPTYSTRING then
+        begin
+          Self.FHaving := concat(Self.FHaving,
+          IfThen(Self.FHaving.IsEmpty,EMPTYSTRING,DEF_LIST_SEPARATOR),
+          aFrom.Having);
+        end;
+    end;
+end;
+
+procedure TDBCriteria.AppendTo(aDest: TDBCriteria);
+var
+  newCrit : TCriterion;
+begin
+  if Assigned(aDest) then
+    begin
+      if Self.FCriteria.Count > 0 then
+        begin
+          for newCrit in Self.FCriteria do
+            begin
+              if not aDest.hasCriterion(newCrit) then
+                aDest.Criteria.Add(newCrit);
+            end;
+        end;
+
+      if Self.FOrderBy <> EMPTYSTRING then
+        begin
+          aDest.OrderBy := concat(aDest.OrderBy,
+          IfThen(aDest.OrderBy.IsEmpty,EMPTYSTRING,DEF_LIST_SEPARATOR),
+          Self.FOrderBy);
+        end;
+
+      if Self.FGroupBy <> EMPTYSTRING then
+        begin
+          aDest.GroupBy := concat(aDest.GroupBy,
+          IfThen(aDest.GroupBy.IsEmpty,EMPTYSTRING,DEF_LIST_SEPARATOR),
+          Self.FGroupBy);
+        end;
+
+      if Self.FHaving <> EMPTYSTRING then
+        begin
+          aDest.Having := concat(aDest.Having,
+          IfThen(aDest.Having.IsEmpty,EMPTYSTRING,DEF_LIST_SEPARATOR),
+          Self.FHaving);
+        end;
+    end;
+end;
+
+function TDBCriteria.BuildCriteria: TStringList;
+var
+  iCrit : Integer;
+  Operation : string;
+begin
+  Result := TStringList.Create;
+
+  Operation := 'WHERE';
+
+  for iCrit := 0 to Self.FCriteria.Count-1 do
+    begin
+      Result.Add(
+        Concat(Operation, SEPARATOR,
+          Self.FCriteria.Items[iCrit].FFieldName, SEPARATOR,
+          Self.FCriteria.Items[iCrit].FOperatorValue, SEPARATOR,
+          Self.FCriteria.Items[iCrit].FFieldValue, SEPARATOR
+        ));
+
+      if Self.FCriteria.Items[iCrit].FNextOperation.IsEmpty then
+        Operation := 'AND'
+      else
+        Operation := Self.FCriteria.Items[iCrit].FNextOperation
+    end;
+
+  if not Self.FGroupBy.IsEmpty then
+    Result.Add(Concat('GROUP BY',SEPARATOR, Self.FGroupBy));
+
+  if not Self.FHaving.IsEmpty then
+    Result.Add(Concat('HAVING',SEPARATOR, Self.FHaving));
+
+  if not Self.FOrderBy.IsEmpty then
+    Result.Add(Concat('ORDER BY',SEPARATOR, Self.FGroupBy));
+
+end;
+
+procedure TDBCriteria.CelarField(aField: string);
+var
+  I: Integer;
+begin
+  for I := Self.FCriteria.Count-1 downto 0 do
+    begin
+      if Self.FCriteria.Items[I].FieldName = aField then
+        begin
+          Self.FCriteria.Delete(I);
+        end;
+    end;
+end;
+
+procedure TDBCriteria.Clear;
+begin
+  Self.FCriteria.Clear;
+  Self.FCriteriaBuilt.Clear;
+  Self.FOrderBy := EMPTYSTRING;
+  Self.FGroupBy := EMPTYSTRING;
+  Self.FHaving := EMPTYSTRING;
+end;
+
+procedure TDBCriteria.CopyFrom(aFrom: TDBCriteria);
+var
+  newCrit : TCriterion;
+begin
+  if Assigned(aFrom) then
+    begin
+      Self.Clear;
+
+      for newCrit in aFrom.Criteria do
+        begin
+          Self.FCriteria.Add(newCrit);
+        end;
+
+      Self.FOrderBy := aFrom.OrderBy;
+      Self.FGroupBy := aFrom.GroupBy;
+      Self.FHaving := aFrom.Having;
+    end;
+end;
+
+procedure TDBCriteria.CopyTo(aDest: TDBCriteria);
+var
+  newCrit : TCriterion;
+begin
+  if Assigned(aDest) then
+    begin
+      aDest.Clear;
+
+      for newCrit in Self.FCriteria do
+        begin
+          aDest.Criteria.Add(newCrit);
+        end;
+
+      aDest.OrderBy := Self.FOrderBy;
+      aDest.GroupBy := Self.FGroupBy;
+      aDest.Having := Self.FHaving;
+    end;
+end;
+
+constructor TDBCriteria.Create(aCriteria: TArray<TCriterion>; aOrder, aGroup,
+  aHaving: string);
+var
+  i: Integer;
+begin
+  inherited Create;
+
+  Self.FCriteria := TList<TCriterion>.Create;
+  Self.FCriteria.Clear;
+
+  for i := Low(aCriteria) to High(aCriteria) do
+    begin
+      Self.FCriteria.Add(aCriteria[i]);
+    end;
+
+  Self.FCriteriaBuilt := TStringList.Create;
+  Self.FCriteriaBuilt.Clear;
+
+  Self.FOrderBy := aOrder;
+  Self.FGroupBy := aGroup;
+  Self.FHaving := aHaving;
+
+
+end;
+
+function TDBCriteria.getCriterionByField(aField: string): TCriterion;
+var
+  aCrit : TCriterion;
+begin
+  Result := TCriterion.Create();
+  for aCrit in Self.FCriteria do
+    begin
+      if aCrit.FieldName = aField then
+        begin
+          Result := aCrit;
+          Break;
+        end;
+    end;
+end;
+
+function TDBCriteria.hasCriterion(aCrit: TCriterion): Boolean;
+var
+  myCrit : TCriterion;
+begin
+  Result := false;
+  for myCrit in Self.FCriteria do
+    begin
+      if myCrit.FieldName.Equals(aCrit.FieldName)
+        and myCrit.OperatorValue.Equals(aCrit.OperatorValue)
+        and myCrit.FieldValue.Equals(aCrit.FieldValue)
+        and myCrit.NextOperation.Equals(aCrit.NextOperation)
+      then
+        begin
+          Result := true;
+          Break;
+        end;
+    end;
+end;
+
+{ TCriterion }
+
+constructor TCriterion.Create(AFieldName, AOperatorValue, AFieldValue,
+  ANextOperation: string);
+begin
+  inherited Create;
+
+  Self.FFieldName := AFieldName;
+  Self.FOperatorValue := AOperatorValue;
+  Self.FFieldValue := AFieldValue;
+  Self.FNextOperation := ANextOperation;
+end;
+
+function TCriterion.getInlineCriterion: string;
+begin
+  Result := EMPTYSTRING;
+  if Self.FFieldName <> EMPTYSTRING then
+    begin
+      Result := Concat(
+        IfThen(Self.FNextOperation.IsEmpty,EmptyStr,Self.FNextOperation),
+        SEPARATOR,
+        Self.FFieldName, SEPARATOR,
+        Self.FOperatorValue, SEPARATOR,
+        Self.FFieldValue
+      );
+    end;
+end;
+
+end.

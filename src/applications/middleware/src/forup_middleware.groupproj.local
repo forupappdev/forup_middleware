@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+  <Transactions>
+    <Transaction>2025/05/19 19:45:14.584,D:\container_project\src\applications\middleware\src\forup_middleware.groupproj=C:\Users\forup-admin\Documents\Embarcadero\Studio\Projects\ProjectGroup1.groupproj</Transaction>
+  </Transactions>
+  <Default.Personality>
+    <Projects ActiveProject="D:\container_project\src\applications\middleware\src\test_project\fmdTest.dproj"/>
+  </Default.Personality>
+</BorlandProject>

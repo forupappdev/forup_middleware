@@ -6,6 +6,7 @@ Generics.Collections, System.TypInfo, System.Types, System.IOUtils, System.IniFi
 System.Rtti, JSON, JSON.BSON, JSON.Builders, JSON.Converters,forup.util.constants;
 
 type
+  {$M+}
   TCriterion = class(TObject)
   private
     FFieldName: string;
@@ -24,6 +25,7 @@ type
     property NextOperation: string read FNextOperation write FNextOperation;
     property InlineCriterion : string read getInlineCriterion;
   end;
+
 
   TDBCriteria = class(TObject)
   private
@@ -47,6 +49,7 @@ type
     procedure CopyFrom(aFrom : TDBCriteria);
     procedure AppendTo(aDest : TDBCriteria);
     procedure CopyTo(aDest : TDBCriteria);
+    procedure Add(aCrit : TCriterion);
 
   published
     property Criteria: TList<TCriterion> read FCriteria write FCriteria;
@@ -60,6 +63,14 @@ type
 implementation
 
 { TDBCriteria }
+
+procedure TDBCriteria.Add(aCrit: TCriterion);
+begin
+  if not Self.FCriteria.Contains(aCrit) then
+    begin
+      Self.FCriteria.Add(aCrit);
+    end;
+end;
 
 procedure TDBCriteria.Append(aFrom: TDBCriteria);
 var

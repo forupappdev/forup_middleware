@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{AD008B81-4CA4-4988-9270-4781A3E0C6A0}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="forup_mid_svc.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="test_project\fmdTest.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="forup_mid_svc">
+        <MSBuild Projects="forup_mid_svc.dproj"/>
+    </Target>
+    <Target Name="forup_mid_svc:Clean">
+        <MSBuild Projects="forup_mid_svc.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="forup_mid_svc:Make">
+        <MSBuild Projects="forup_mid_svc.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="fmdTest">
+        <MSBuild Projects="test_project\fmdTest.dproj"/>
+    </Target>
+    <Target Name="fmdTest:Clean">
+        <MSBuild Projects="test_project\fmdTest.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="fmdTest:Make">
+        <MSBuild Projects="test_project\fmdTest.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="forup_mid_svc;fmdTest"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="forup_mid_svc:Clean;fmdTest:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="forup_mid_svc:Make;fmdTest:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
