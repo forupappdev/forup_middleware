@@ -6,7 +6,6 @@ program fmdTest;
 {$STRONGLINKTYPES ON}
 uses
   FastMM5,
-  DUnitX.MemoryLeakMonitor.FastMM5,
   System.SysUtils,
   {$IFDEF TESTINSIGHT}
   TestInsight.DUnitX,

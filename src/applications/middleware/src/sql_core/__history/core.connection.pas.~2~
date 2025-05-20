@@ -1,0 +1,28 @@
+unit core.connection;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+  FireDAC.Phys, FireDAC.Comp.Client;
+
+type
+  TconnCore = class(TDataModule)
+    ConnManager: TFDManager;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  connCore: TconnCore;
+
+implementation
+
+{%CLASSGROUP 'System.Classes.TPersistent'}
+
+{$R *.dfm}
+
+end.

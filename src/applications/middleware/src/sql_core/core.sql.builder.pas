@@ -29,7 +29,6 @@ type
     published
       property ConnType : TConnType read _ConnType;
       property BaseEntity : TBaseEntity read _BaseEntity write _BaseEntity;
-
   end;
 
 const
