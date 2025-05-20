@@ -35,7 +35,6 @@ implementation
 procedure TBaseFireDACConnAdapter.BindParams(AParams: TFDParams;
   const AValues : TDictionary<string, TValue>);
 var
-  I: Integer;
   ParamName: string;
   AValue : TPair<string, TValue>;
   ParamValue: TValue;
@@ -108,6 +107,7 @@ var
   aCMD : TFDCommand;
 begin
   FCritical.Acquire;
+  Result := -1;
   try
     aCMD := TFDCommand.Create(nil);
     try
@@ -146,6 +146,7 @@ var
   Qry : TFDQuery;
 begin
   FCritical.Acquire;
+  Result := nil;
   try
     Qry := TFDQuery.Create(nil);
     Qry.Connection := FConn;
@@ -159,7 +160,7 @@ begin
     except
       on e : exception do
         begin
-          Result := TDataSet.Create(nil);
+
         end;
     end;
   finally
