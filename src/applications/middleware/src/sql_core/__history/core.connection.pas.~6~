@@ -28,8 +28,6 @@ type
     procedure ConfigureMSSQL_Driver;
     procedure ConfigureOracle_Driver;
     procedure ConfigureMongo_Driver;
-
-    function LoadConnManagerFile : Boolean;
   public
     { Public declarations }
   end;
@@ -42,37 +40,5 @@ implementation
 {%CLASSGROUP 'System.Classes.TPersistent'}
 
 {$R *.dfm}
-
-{ TconnCore }
-
-procedure TconnCore.ConfigureMongo_Driver;
-begin
-
-end;
-
-procedure TconnCore.ConfigureMSSQL_Driver;
-begin
-
-end;
-
-procedure TconnCore.ConfigureMySQLDriver;
-begin
-
-end;
-
-procedure TconnCore.ConfigureOracle_Driver;
-begin
-
-end;
-
-procedure TconnCore.ConfigurePG_Driver;
-begin
-
-end;
-
-function TconnCore.LoadConnManagerFile: Boolean;
-begin
-
-end;
 
 end.

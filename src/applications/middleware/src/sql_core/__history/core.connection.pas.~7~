@@ -43,36 +43,4 @@ implementation
 
 {$R *.dfm}
 
-{ TconnCore }
-
-procedure TconnCore.ConfigureMongo_Driver;
-begin
-
-end;
-
-procedure TconnCore.ConfigureMSSQL_Driver;
-begin
-
-end;
-
-procedure TconnCore.ConfigureMySQLDriver;
-begin
-
-end;
-
-procedure TconnCore.ConfigureOracle_Driver;
-begin
-
-end;
-
-procedure TconnCore.ConfigurePG_Driver;
-begin
-
-end;
-
-function TconnCore.LoadConnManagerFile: Boolean;
-begin
-
-end;
-
 end.
