@@ -1,0 +1,60 @@
+object connCore: TconnCore
+  Height = 298
+  Width = 640
+  object ConnManager: TFDManager
+    FormatOptions.AssignedValues = [fvMapRules]
+    FormatOptions.OwnMapRules = True
+    FormatOptions.MapRules = <>
+    Active = True
+    Left = 40
+    Top = 16
+  end
+  object LocalDatabase: TFDConnection
+    Left = 40
+    Top = 80
+  end
+  object LocalCMD: TFDCommand
+    Connection = LocalDatabase
+    Left = 40
+    Top = 144
+  end
+  object LocalQry: TFDQuery
+    Connection = LocalDatabase
+    Left = 40
+    Top = 208
+  end
+  object MySQL_Driver: TFDPhysMySQLDriverLink
+    Left = 568
+    Top = 8
+  end
+  object PG_Driver: TFDPhysPgDriverLink
+    Left = 568
+    Top = 64
+  end
+  object MSSQL_Driver: TFDPhysMSSQLDriverLink
+    Left = 568
+    Top = 176
+  end
+  object Oracle_Driver: TFDPhysOracleDriverLink
+    Left = 568
+    Top = 232
+  end
+  object Mongo_Driver: TFDPhysMongoDriverLink
+    Left = 568
+    Top = 120
+  end
+  object MongoDataSet: TFDMongoDataSet
+    Connection = MongoConnection
+    Left = 232
+    Top = 56
+  end
+  object MongoQry: TFDMongoQuery
+    Connection = MongoConnection
+    Left = 232
+    Top = 120
+  end
+  object MongoConnection: TFDConnection
+    Left = 232
+    Top = 8
+  end
+end

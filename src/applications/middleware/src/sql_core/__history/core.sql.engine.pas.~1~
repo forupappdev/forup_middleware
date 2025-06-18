@@ -1,0 +1,7 @@
+unit core.sql.engine;
+
+interface
+
+implementation
+
+end.

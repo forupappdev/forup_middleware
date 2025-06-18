@@ -210,6 +210,14 @@
         <DCCReference Include="sql_core\core.sql.entity.pas"/>
         <DCCReference Include="sql_core\core.sql.builder.pas"/>
         <DCCReference Include="lib\forup.util.types.pas"/>
+        <DCCReference Include="sql_core\core.sql.engine.pas"/>
+        <DCCReference Include="sql_core\core.connection.pas">
+            <Form>connCore</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TDataModule</DesignClass>
+        </DCCReference>
+        <DCCReference Include="orm\connections\core.db.connection.intf.pas"/>
+        <DCCReference Include="orm\connections\core.db.connection.firedac.base.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

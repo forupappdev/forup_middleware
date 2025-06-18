@@ -1,0 +1,7 @@
+unit core.db.connection.intf;
+
+interface
+
+implementation
+
+end.

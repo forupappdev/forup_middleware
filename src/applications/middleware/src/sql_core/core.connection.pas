@@ -1,0 +1,78 @@
+unit core.connection;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+  FireDAC.Phys, FireDAC.Comp.Client, FireDAC.Stan.Pool, FireDAC.Stan.Async,
+  FireDAC.ConsoleUI.Wait, FireDAC.Stan.Param, FireDAC.DatS, FireDAC.DApt.Intf,
+  FireDAC.DApt, Data.DB, FireDAC.Comp.DataSet, FireDAC.Phys.MySQLDef,
+  FireDAC.Phys.PGDef, FireDAC.Phys.MSSQLDef, FireDAC.Phys.OracleDef,
+  FireDAC.Phys.MongoDBDef, FireDAC.Phys.MongoDBDataSet, FireDAC.Phys.MongoDB,
+  FireDAC.Phys.Oracle, FireDAC.Phys.ODBCBase, FireDAC.Phys.MSSQL,
+  FireDAC.Phys.PG, FireDAC.Phys.MySQL;
+
+type
+  TconnCore = class(TDataModule)
+    ConnManager: TFDManager;
+    MySQL_Driver: TFDPhysMySQLDriverLink;
+    PG_Driver: TFDPhysPgDriverLink;
+    MSSQL_Driver: TFDPhysMSSQLDriverLink;
+    Oracle_Driver: TFDPhysOracleDriverLink;
+    Mongo_Driver: TFDPhysMongoDriverLink;
+  private
+    { Private declarations }
+    procedure ConfigureMySQLDriver;
+    procedure ConfigurePG_Driver;
+    procedure ConfigureMSSQL_Driver;
+    procedure ConfigureOracle_Driver;
+    procedure ConfigureMongo_Driver;
+
+    function LoadConnManagerFile : Boolean;
+  public
+    { Public declarations }
+  end;
+
+var
+  connCore: TconnCore;
+
+implementation
+
+{%CLASSGROUP 'System.Classes.TPersistent'}
+
+{$R *.dfm}
+
+{ TconnCore }
+
+procedure TconnCore.ConfigureMongo_Driver;
+begin
+
+end;
+
+procedure TconnCore.ConfigureMSSQL_Driver;
+begin
+
+end;
+
+procedure TconnCore.ConfigureMySQLDriver;
+begin
+
+end;
+
+procedure TconnCore.ConfigureOracle_Driver;
+begin
+
+end;
+
+procedure TconnCore.ConfigurePG_Driver;
+begin
+
+end;
+
+function TconnCore.LoadConnManagerFile: Boolean;
+begin
+
+end;
+
+end.
