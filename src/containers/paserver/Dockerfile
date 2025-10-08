@@ -13,11 +13,16 @@ ENV PORT=64211
 EXPOSE 64211
 
 # Copia e extrai o pacote necessário
-COPY ./pkg/LinuxPAServer23.0.tar.gz ./
-RUN tar -xvf ./LinuxPAServer23.0.tar.gz
+#DELPHI 12
+#COPY ./pkg/LinuxPAServer23.0.tar.gz ./
+#RUN tar -xvf ./LinuxPAServer23.0.tar.gz
+
+#DELPHI 13
+COPY ./pkg/LinuxPAServer37.0.tar.gz ./
+RUN tar -xvf ./LinuxPAServer37.0.tar.gz
 
 # Define o ponto de entrada de forma segura
-ENTRYPOINT ["/PAServer-23.0/paserver", "-password=hitman47"]
+ENTRYPOINT ["/PAServer-37.0/paserver", "-password=hitman47"]
 
 #CONSTRUIR IMAGEM DOCKER
 #docker build --pull --rm -f 'src\containers\paserver\Dockerfile' -t 'foruppaserver:latest' 'src\containers\paserver'

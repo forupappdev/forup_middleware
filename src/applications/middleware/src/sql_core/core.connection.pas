@@ -72,7 +72,7 @@ end;
 
 function TconnCore.LoadConnManagerFile: Boolean;
 begin
-
+  Result := false;
 end;
 
 end.
