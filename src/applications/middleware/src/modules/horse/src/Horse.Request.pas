@@ -9,21 +9,18 @@ interface
 uses
 {$IF DEFINED(FPC)}
   SysUtils,
-  Classes,
   fpHTTP,
   HTTPDefs,
 {$ELSE}
   System.SysUtils,
-  System.Classes,
   Web.HTTPApp,
 {$IF CompilerVersion > 32.0}
   Web.ReqMulti,
 {$ENDIF}
 {$ENDIF}
   Horse.Core.Param,
-  Horse.Core.Param.Header,
-  Horse.Commons,
-  Horse.Session;
+  Horse.Session,
+  Horse.Commons;
 
 type
   THorseRequest = class
@@ -66,6 +63,14 @@ type
   end;
 
 implementation
+
+uses      
+{$IF DEFINED(FPC)}
+  Classes,
+{$ELSE}
+  System.Classes,
+{$ENDIF}
+  Horse.Core.Param.Header;
 
 function THorseRequest.Body: string;
 begin
@@ -246,7 +251,10 @@ begin
     LEqualFirstPos := Pos('=', LItem);
     LKey := Copy(LItem, 1, LEqualFirstPos - 1);
     LValue := Copy(LItem, LEqualFirstPos + 1, Length(LItem));
-    FQuery.Dictionary.AddOrSetValue(LKey, LValue);
+    if not FQuery.Dictionary.ContainsKey(LKey) then
+      FQuery.Dictionary.AddOrSetValue(LKey, LValue)
+    else
+      FQuery.Dictionary[LKey] := FQuery.Dictionary[LKey] +','+ LValue;
   end;
 end;
 

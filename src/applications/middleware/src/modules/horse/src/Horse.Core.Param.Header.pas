@@ -8,7 +8,6 @@ interface
 
 uses
 {$IF DEFINED(FPC)}
-  SysUtils,
   Classes,
   fpHTTP,
   fphttpserver,
@@ -16,13 +15,8 @@ uses
   HTTPDefs,
 {$ELSE}
   System.Classes,
-  System.SysUtils,
   System.Generics.Collections,
   Web.HTTPApp,
-  IdCustomHTTPServer,
-  IdHeaderList,
-  Horse.Rtti,
-  Horse.Commons,
   Horse.Rtti.Helper,
   {$IF DEFINED(HORSE_APACHE)}
     Web.ApacheHTTP,
@@ -50,6 +44,15 @@ type
   end;
 
 implementation
+
+uses    
+{$IF DEFINED(FPC)}
+  SysUtils,
+{$ELSE}
+  IdCustomHTTPServer,
+  System.SysUtils,
+{$ENDIF}
+  Horse.Rtti;
 
 class function THorseCoreParamHeader.GetHeaders(const AWebRequest: {$IF DEFINED(FPC)}TRequest{$ELSE}TWebRequest{$ENDIF}): THorseList;
 var
@@ -152,10 +155,17 @@ begin
       for LEnvVarIndex := 0 to Pred(LEnvironmentVariables.Count) do
       begin
         if (LEnvironmentVariables.Strings[LEnvVarIndex].StartsWith('HTTP_')) then
-          Result.AddPair(
-            NormalizeEnvVarHeaderName(LEnvironmentVariables.KeyNames[LEnvVarIndex]),
-            LEnvironmentVariables.ValueFromIndex[LEnvVarIndex]
-          );
+        begin
+          {$IF COMPILERVERSION <= 32}
+            Result.Add(NormalizeEnvVarHeaderName(LEnvironmentVariables.Names[LEnvVarIndex]));
+            Result.Values[LEnvironmentVariables.Names[LEnvVarIndex]] := LEnvironmentVariables.ValueFromIndex[LEnvVarIndex];
+          {$ELSE}
+            Result.AddPair(
+              NormalizeEnvVarHeaderName(LEnvironmentVariables.KeyNames[LEnvVarIndex]),
+              LEnvironmentVariables.ValueFromIndex[LEnvVarIndex]
+            );
+          {$IFEND}
+        end;
       end;
     finally
       LEnvironmentVariables.Free;

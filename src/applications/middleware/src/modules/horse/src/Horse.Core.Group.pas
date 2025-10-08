@@ -7,11 +7,6 @@ unit Horse.Core.Group;
 interface
 
 uses
-{$IF DEFINED(FPC)}
-  SysUtils,
-{$ELSE}
-  System.SysUtils,
-{$ENDIF}
   Horse.Core.Group.Contract,
   Horse.Core.Route.Contract,
   Horse.Callback;
@@ -32,6 +27,12 @@ type
     function Use(const AMiddleware, ACallback: THorseCallback): IHorseCoreGroup<T>; overload;
     function Use(const ACallbacks: array of THorseCallback): IHorseCoreGroup<T>; overload;
     function Use(const ACallbacks: array of THorseCallback; const ACallback: THorseCallback): IHorseCoreGroup<T>; overload;
+    function All(const APath: string; const ACallback: THorseCallback): IHorseCoreGroup<T>; overload;
+    function All(const APath: string; const ACallback: THorseCallbackRequestResponse): IHorseCoreGroup<T>; overload;
+    function All(const APath: string; const ACallback: THorseCallbackRequest): IHorseCoreGroup<T>; overload;
+{$IFNDEF FPC}
+    function All(const APath: string; const ACallback: THorseCallbackResponse): IHorseCoreGroup<T>; overload;
+{$IFEND}
     function Get(const APath: string; const ACallback: THorseCallback): IHorseCoreGroup<T>; overload;
     function Get(const APath: string; const ACallback: THorseCallbackRequestResponse): IHorseCoreGroup<T>; overload;
     function Get(const APath: string; const ACallback: THorseCallbackRequest): IHorseCoreGroup<T>; overload;
@@ -76,6 +77,11 @@ type
 implementation
 
 uses
+{$IF DEFINED(FPC)}
+  SysUtils,
+{$ELSE}
+  System.SysUtils,
+{$ENDIF}
   Horse.Core,
   Horse;
 
@@ -178,6 +184,32 @@ begin
     AddCallback(LCallback);
   Result := Self;
 end;
+
+function THorseCoreGroup<T>.All(const APath: string; const ACallback: THorseCallback): IHorseCoreGroup<T>;
+begin
+  Result := Self;
+  THorseCore(FHorseCore).All(NormalizePath(APath), ACallback);
+end;
+
+function THorseCoreGroup<T>.All(const APath: string; const ACallback: THorseCallbackRequestResponse): IHorseCoreGroup<T>;
+begin
+  THorseCore(FHorseCore).All(NormalizePath(APath), ACallback);
+  Result := Self;
+end;
+
+function THorseCoreGroup<T>.All(const APath: string; const ACallback: THorseCallbackRequest): IHorseCoreGroup<T>;
+begin
+  THorseCore(FHorseCore).All(NormalizePath(APath), ACallback);
+  Result := Self;
+end;
+
+{$IFNDEF FPC}
+function THorseCoreGroup<T>.All(const APath: string; const ACallback: THorseCallbackResponse): IHorseCoreGroup<T>;
+begin
+  THorseCore(FHorseCore).All(NormalizePath(APath), ACallback);
+  Result := Self;
+end;
+{$IFEND}
 
 constructor THorseCoreGroup<T>.Create;
 begin
