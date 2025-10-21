@@ -1,3 +1,4 @@
 **/dev_files/database
 **/mogoerp/
 **/mogoerp/mongo_data/
+/src/containers/mongoerp
