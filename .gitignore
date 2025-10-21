@@ -2,3 +2,4 @@
 **/mogoerp/
 **/mogoerp/mongo_data/
 /src/containers/mongoerp
+src/containers/mongoerp/mongo_data/diagnostic.data/metrics.interim
