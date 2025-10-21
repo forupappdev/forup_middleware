@@ -29,6 +29,11 @@ type
     published
       property ConnType : TConnType read _ConnType;
       property BaseEntity : TBaseEntity read _BaseEntity write _BaseEntity;
+      property SelectEntity : WideString read getSelectCMD;
+      property DeleteEntity : WideString read getDeleteCMD;
+      property UpdateEntity : WideString read getUpdateCMD;
+      property InsertEntity : WideString read getInsertCMD;
+
   end;
 
 const

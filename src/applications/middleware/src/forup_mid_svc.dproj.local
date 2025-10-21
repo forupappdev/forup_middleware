@@ -27,5 +27,21 @@
     <Transaction>2025/05/19 21:48:11.000.617,D:\container_project\src\applications\middleware\src\orm\connections\core.db.connection.intf.pas=D:\container_project\src\applications\middleware\src\Unit1.pas</Transaction>
     <Transaction>2025/05/19 21:50:30.000.380,=D:\container_project\src\applications\middleware\src\Unit1.pas</Transaction>
     <Transaction>2025/05/19 21:51:09.000.508,D:\container_project\src\applications\middleware\src\orm\connections\core.db.connection.firedac.base.pas=D:\container_project\src\applications\middleware\src\Unit1.pas</Transaction>
-  </Transactions>
+  </Transactions>  <ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="lib"/>
+    <File Path="lib\forup.util.constants.pas"/>
+    <File Path="lib\forup.util.functions.pas"/>
+    <File Path="lib\forup.util.types.pas"/>
+    <File Path="orm"/>
+    <File Path="orm\connections"/>
+    <File Path="orm\connections\core.db.connection.firedac.base.pas"/>
+    <File Path="orm\connections\core.db.connection.intf.pas"/>
+    <File Path="sql_core"/>
+    <File Path="sql_core\core.connection.pas"/>
+    <File Path="sql_core\core.connection.dfm"/>
+    <File Path="sql_core\core.sql.attributes.pas"/>
+    <File Path="sql_core\core.sql.builder.pas"/>
+    <File Path="sql_core\core.sql.engine.pas"/>
+    <File Path="sql_core\core.sql.entity.pas"/>
+  </ProjectSortOrder>
 </BorlandProject>
