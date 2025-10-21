@@ -1,1 +1,13 @@
 **/dev_files/database
+**/mogoerp/
+**/mogoerp/mongo_data/
+/src/containers/mongoerp
+src/containers/mongoerp/mongo_data/diagnostic.data/metrics.interim
+src/containers/mongoerp/mongo_data/diagnostic.data/metrics.interim
+src/containers/mongoerp/mongo_data/journal/WiredTigerLog.0000000006
+src/containers/mongoerp/mongo_data/WiredTiger.turtle
+src/containers/mongoerp/mongo_data/WiredTiger.wt
+*.interim
+*.turtle
+*.wt
+*.0000000006

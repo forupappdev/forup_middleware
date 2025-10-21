@@ -3,7 +3,8 @@ unit core.sql.entity;
 interface
 uses System.Classes, System.Math, System.StrUtils, System.SysUtils, Generics.Collections,
 System.JSON, System.JSON.Builders, System.JSON.Converters, System.JSON.BSON, System.JSON.Types,
-forup.util.constants, core.sql.attributes, System.Rtti, System.TypInfo, System.Types, forup.util.types;
+forup.util.constants, core.sql.attributes, System.Rtti, System.TypInfo, System.Types, forup.util.types,
+Data.DB, System.Variants;
 
 type
   {$M+}
@@ -23,6 +24,11 @@ type
     public
       class procedure RegisterClass;
       constructor CreateEntity;
+      function MorphinCreate<T : class> : TBaseEntity;
+
+      procedure ClearEntity;
+      procedure LoadFromDataSetLine(aDataSet : TDataSet);
+      function getProperties : TArray<TRttiProperty>;
     published
       property TableName : string read getTableName;
       property PKColumns : TDictionary<string, string> read getPKColumns;
@@ -39,6 +45,30 @@ type
 implementation
 uses forup.util.functions;
 { TBaseEntity }
+
+procedure TBaseEntity.ClearEntity;
+var
+  context : TRttiContext;
+  rtype : TRttiType;
+  aProp : TRttiProperty;
+begin
+  context := TRttiContext.Create;
+  try
+    rtype := context.GetType(Self.ClassType);
+    for aProp in rtype.GetProperties do
+      begin
+        case aProp.PropertyType.TypeKind of
+          tkUnknown, tkChar, tkString, tkWChar, tkLString
+          , tkWString, tkUString: aProp.SetValue(Self, EmptyStr);
+          tkInteger, tkInt64: aProp.SetValue(Self, 0);
+          tkFloat: aProp.SetValue(Self, 0.00);
+          tkVariant: aProp.SetValue(Self, TValue.Empty);
+        end;
+      end;
+  finally
+    context.Free;
+  end;
+end;
 
 constructor TBaseEntity.CreateEntity;
 begin
@@ -247,6 +277,17 @@ begin
     end;
 end;
 
+function TBaseEntity.getProperties: TArray<TRttiProperty>;
+var
+  context : TRttiContext;
+  rtype : TRttiType;
+begin
+  context := TRttiContext.Create;
+  rtype := context.GetType(Self.ClassType);
+
+  Result := rtype.GetProperties;
+end;
+
 function TBaseEntity.getTableName: string;
 var
   tableAttr : Table;
@@ -256,6 +297,69 @@ begin
 
   if Assigned(tableAttr) then
     Result := tableAttr.Name;
+end;
+
+procedure TBaseEntity.LoadFromDataSetLine(aDataSet: TDataSet);
+var
+  aField : TField;
+  aProp : TRttiProperty;
+begin
+  Self.ClearEntity;
+  try
+    if TFunctions.GetFunctions.isValidDataSet(aDataSet) then
+      begin
+        for aProp in Self.getProperties do
+          begin
+            aField := aDataSet.FindField(aProp.Name);
+            if Assigned(aField) then
+              begin
+                case aProp.PropertyType.TypeKind of
+                  tkInteger, tkInt64: aProp.SetValue(Self, aField.AsInteger);
+                  tkFloat: aProp.SetValue(Self, aField.AsFloat);
+                  tkChar, tkString, tkUString, tkUnknown,
+                  tkWChar, tkLString, tkWString: aProp.SetValue(Self, aField.AsString);
+                  tkVariant: aProp.SetValue(Self, TValue.FromVariant(aField.Value));
+                  //tkEnumeration: ;
+                  //tkSet: ;
+                  //tkClass: ;
+                  //tkMethod: ;
+                  //tkArray: ;
+                  //tkRecord: ;
+                  //tkInterface: ;
+                  //tkDynArray: ;
+                  //tkClassRef: ;
+                  //tkPointer: ;
+                  //tkProcedure: ;
+                  //tkMRecord: ;
+                end;
+              end;
+          end;
+      end;
+  except
+    on E : Exception do
+      begin
+
+      end;
+  end;
+
+end;
+
+function TBaseEntity.MorphinCreate<T> : TBaseEntity;
+var
+  context : TRttiContext;
+  rtype : TRttiType;
+  method : TRttiMethod;
+  obj : TValue;
+begin
+  context := TRttiContext.Create;
+  rtype := context.GetType(TypeInfo(T));
+  method := rtype.GetMethod('CreateEntity');
+  if method.IsConstructor then
+    begin
+      obj := Method.Invoke(rtype.AsInstance.MetaclassType, []);
+    end;
+
+  Result := TBaseEntity(obj.AsObject);
 end;
 
 class procedure TBaseEntity.RegisterClass;

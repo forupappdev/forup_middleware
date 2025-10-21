@@ -3,7 +3,8 @@ unit forup.util.functions;
 interface
 uses System.Rtti, System.TypInfo, System.JSON, System.JSON.Builders, System.JSON.Converters,
 System.Classes, System.StrUtils, System.Math, System.MaskUtils, System.Masks, System.DateUtils,
-Generics.Collections, forup.util.constants, System.SysUtils, System.Variants, core.sql.attributes;
+Generics.Collections, forup.util.constants, System.SysUtils, System.Variants, core.sql.attributes,
+Data.DB;
 
 type
   {Singleton Class - Multiple porpuse}
@@ -52,7 +53,12 @@ type
       class function isValidDate(aDate : string) : Boolean;
       class function isValidDateTime(aDate : string) : Boolean;
       class function isValidTime(aDate : string) : Boolean;
+      class function isValidDataSet(aDataSet : TDataSet) : Boolean;
       {End of Validation Functions}
+
+      {Data Convertion}
+      class function DataSetToObjectList<T : Class>(aDataSet : TDataSet) : TObjectList<T>;
+      {End of Data Convertion}
 
   end;
 
@@ -90,6 +96,12 @@ begin
             Result := DB_CONVERT_ERROR;
         end;
     end;
+end;
+
+class function TFunctions.DataSetToObjectList<T>(
+  aDataSet: TDataSet): TObjectList<T>;
+begin
+  Result := TObjectList<T>.Create;
 end;
 
 class function TFunctions.db_boolean(aValue, aReturnNull: Boolean): string;
@@ -229,7 +241,6 @@ class function TFunctions.db_double(aValue: string;
   aReturnNull: Boolean): string;
 var
   dblValue : Extended;
-  error : Boolean;
   fs : TFormatSettings;
 begin
   if aValue.IsEmpty then
@@ -242,7 +253,6 @@ begin
     end
   else
     begin
-      error := False;
       fs := TFormatSettings.Create;
 
       try
@@ -442,6 +452,24 @@ begin
   finally
     context.Free;
   end;
+end;
+
+class function TFunctions.isValidDataSet(aDataSet: TDataSet): Boolean;
+begin
+  Result := True;
+  if not Assigned(aDataSet) then
+    begin
+      Result := False;
+      Exception.CreateFmt('[FUPFunctions][DataSet Validation] DataSet Object not assigned.', []);
+    end
+  else
+    begin
+      if aDataSet.IsEmpty then
+        begin
+          Result := False;
+          Exception.CreateFmt('[FUPFunctions][DataSet Validation] DataSet "%s" is Empty.', [aDataSet.Name]);
+        end;
+    end;
 end;
 
 class function TFunctions.isValidDate(aDate: string): Boolean;
