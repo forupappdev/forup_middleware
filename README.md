@@ -55,4 +55,4 @@ This project is licensed under the MIT License. See the `LICENSE` file for more 
 
 ---
 
-**Developed with passion by the ForUpAppDev team.**
+**Developed with passion by the ForUp Solutions team.**
