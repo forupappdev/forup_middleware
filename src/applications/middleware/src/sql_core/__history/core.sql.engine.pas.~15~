@@ -16,7 +16,7 @@ type
     constructor Create(AConn: IFUPConnection);
 
     function Find(ID: Variant): T; overload; virtual;
-    function Find(aCrit : TDBCriteria) : TObjectList<T>; overload; virtual;
+    function Find(aCrit : TCriterion) : TObjectList<T>; overload; virtual;
     function Save(AObj: T): Boolean; virtual;
     function Delete(AObj: T): Boolean; virtual;
     function All: TObjectList<T>; virtual;
@@ -30,7 +30,7 @@ uses forup.util.constants;
 
 function TFUPORM<T>.All: TObjectList<T>;
 begin
-  Result := Self.Find(TDBCriteria.Create);
+  Result := TObjectList<T>.Create;
 end;
 
 constructor TFUPORM<T>.Create(AConn: IFUPConnection);
@@ -50,7 +50,7 @@ function TFUPORM<T>.Find(ID: Variant): T;
 var
   aEntity : TBaseEntity;
   pk : TPair<string, string>;
-  aCrit : TDBCriteria;
+
   queryResult : TDataSet;
 begin
   try
@@ -58,28 +58,22 @@ begin
     aEntity := aEntity.MorphinCreate<T>;
 
     _Builder.BaseEntity := aEntity;
-    aCrit := TDBCriteria.Create;
-
+    aCriteria := TDictionary<string, TValue>.Create;
     for pk in aEntity.PKColumns do
       begin
-        aCrit.Add(TCriterion.Create(pk.Key, '=', ID));
+        aCriteria.Add(pk.Key, TValue.From(ID));
       end;
-
-    queryResult := FConn.Query(
-      concat(_Builder.SelectEntity
-      , SEPARATOR
-      , aCrit.CriteriaBuilt.Text));
-
+    queryResult := FConn.Query(_Builder.SelectEntity, aCriteria);
     aEntity.ClearEntity;
     aEntity.LoadFromDataSetLine(queryResult);
     Result := aEntity as T;
   finally
-    FreeAndNil(aCrit);
+    FreeAndNil(aCriteria);
     FreeAndNil(queryResult);
   end;
 end;
 
-function TFUPORM<T>.Find(aCrit: TDBCriteria): TObjectList<T>;
+function TFUPORM<T>.Find(aCrit: TCriterion): TObjectList<T>;
 var
   aEntity : TBaseEntity;
   queryCMD : WideString;
@@ -87,32 +81,21 @@ var
 begin
   try
     Result := TObjectList<T>.Create;
+    aEntity := TBaseEntity.CreateEntity;
+    aEntity := aEntity.MorphinCreate<T>;
+
     _Builder.BaseEntity := aEntity;
 
     queryCMD := Concat(_Builder.SelectEntity, SEPARATOR,
-    aCrit.CriteriaBuilt.Text);
+    aCrit.InlineCriterion);
 
-    queryResult := FConn.Query(queryCMD, nil);
+    queryResult := FConn.Query(queryCMD, TDictionary<string, TValue>.Create);
+    aEntity.
 
-    with queryResult do
-      begin
-        First;
-        while not Eof do
-          begin
-            aEntity := TBaseEntity.CreateEntity;
-            aEntity := aEntity.MorphinCreate<T>;
-
-            aEntity.ClearEntity;
-            aEntity.LoadFromDataSetLine(queryResult);
-            Result.Add(aEntity as T);
-
-            Next;
-          end;
-      end;
   finally
-    FreeAndNil(aEntity);
     FreeAndNil(queryResult);
   end;
+
 end;
 
 function TFUPORM<T>.Save(AObj: T): Boolean;

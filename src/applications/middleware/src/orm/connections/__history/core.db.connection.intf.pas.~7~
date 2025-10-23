@@ -12,7 +12,7 @@ type
     function Commit: Boolean;
     function Rollback: Boolean;
 
-    function Execute(const ASQL: string; const AParams: TDictionary<string, TValue> = nil): Integer;
+    function Execute(const ASQL: string; const AParams: TDictionary<string, TValue>): Integer;
     function Query(const ASQL: string; const AParams: TDictionary<string, TValue> = nil): TDataSet;
 
     function GetIsInTransaction: Boolean;

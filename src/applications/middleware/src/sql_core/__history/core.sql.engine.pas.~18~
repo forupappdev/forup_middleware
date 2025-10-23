@@ -30,7 +30,7 @@ uses forup.util.constants;
 
 function TFUPORM<T>.All: TObjectList<T>;
 begin
-  Result := Self.Find(TDBCriteria.Create);
+  Result := TObjectList<T>.Create;
 end;
 
 constructor TFUPORM<T>.Create(AConn: IFUPConnection);
@@ -87,32 +87,19 @@ var
 begin
   try
     Result := TObjectList<T>.Create;
+    aEntity := TBaseEntity.CreateEntity;
+    aEntity := aEntity.MorphinCreate<T>;
+
     _Builder.BaseEntity := aEntity;
 
     queryCMD := Concat(_Builder.SelectEntity, SEPARATOR,
     aCrit.CriteriaBuilt.Text);
 
     queryResult := FConn.Query(queryCMD, nil);
-
-    with queryResult do
-      begin
-        First;
-        while not Eof do
-          begin
-            aEntity := TBaseEntity.CreateEntity;
-            aEntity := aEntity.MorphinCreate<T>;
-
-            aEntity.ClearEntity;
-            aEntity.LoadFromDataSetLine(queryResult);
-            Result.Add(aEntity as T);
-
-            Next;
-          end;
-      end;
   finally
-    FreeAndNil(aEntity);
     FreeAndNil(queryResult);
   end;
+
 end;
 
 function TFUPORM<T>.Save(AObj: T): Boolean;

@@ -30,7 +30,7 @@ uses forup.util.constants;
 
 function TFUPORM<T>.All: TObjectList<T>;
 begin
-  Result := Self.Find(TDBCriteria.Create);
+  Result := TObjectList<T>.Create;
 end;
 
 constructor TFUPORM<T>.Create(AConn: IFUPConnection);
@@ -113,6 +113,7 @@ begin
     FreeAndNil(aEntity);
     FreeAndNil(queryResult);
   end;
+
 end;
 
 function TFUPORM<T>.Save(AObj: T): Boolean;

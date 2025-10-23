@@ -4,16 +4,20 @@ interface
 uses core.db.connection.intf, core.connection, System.SysUtils, System.Math, System.Classes,
   Data.DB, FireDAC.Comp.Client,  FireDAC.Stan.Intf,  FireDAC.Stan.Param,  FireDAC.Stan.Option,
   FireDAC.Stan.Error,  FireDAC.DatS,  FireDAC.Phys.Intf,  FireDAC.DApt.Intf,  FireDAC.DApt,
-  FireDAC.Stan.Async, System.SyncObjs, System.Rtti, Generics.Collections, System.Variants;
+  FireDAC.Stan.Async, System.SyncObjs, System.Rtti, Generics.Collections, System.Variants,
+  forup.util.constants;
 
 type
   TBaseFireDACConnAdapter = class(TInterfacedObject, IFUPConnection)
     private
+      FConnType : TConnType;
       FConn : TFDConnection;
       FInTransaction: Boolean;
       FCritical: TCriticalSection;
       FConnectionName: string;
       procedure BindParams(AParams: TFDParams; const AValues : TDictionary<string, TValue>);
+      function getConnType : TConnType;
+    procedure setConnType(const aConn : TConnType);
     public
       constructor Create(const AConnDef : string);
       destructor Destroy; override;
@@ -21,8 +25,8 @@ type
       function Commit: Boolean;
       function Rollback: Boolean;
 
-      function Execute(const ASQL: string; const AParams: TDictionary<string, TValue>): Integer;
-      function Query(const ASQL: string; const AParams: TDictionary<string, TValue>): TDataSet;
+      function Execute(const ASQL: string; const AParams: TDictionary<string, TValue> = nil): Integer;
+      function Query(const ASQL: string; const AParams: TDictionary<string, TValue> = nil): TDataSet;
 
       function GetIsInTransaction: Boolean;
       function GetConnectionName: string;
@@ -31,6 +35,7 @@ type
 implementation
 
 { TBaseFireDACConnAdapter }
+
 
 procedure TBaseFireDACConnAdapter.BindParams(AParams: TFDParams;
   const AValues : TDictionary<string, TValue>);
@@ -102,7 +107,7 @@ begin
 end;
 
 function TBaseFireDACConnAdapter.Execute(const ASQL: string;
-  const AParams: TDictionary<string, TValue>): Integer;
+  const AParams: TDictionary<string, TValue> = nil): Integer;
 var
   aCMD : TFDCommand;
 begin
@@ -113,7 +118,10 @@ begin
     try
       aCMD.Connection := FConn;
       aCMD.CommandText.Add(ASQL);
-      BindParams(aCMD.Params, AParams);
+
+      if assigned(AParams) then
+        BindParams(aCMD.Params, AParams);
+
       aCMD.Prepare();
       aCMD.Execute();
       aCMD.Unprepare;
@@ -135,13 +143,18 @@ begin
   Result := Self.FConnectionName;
 end;
 
+function TBaseFireDACConnAdapter.getConnType: TConnType;
+begin
+  Result := FConnType;
+end;
+
 function TBaseFireDACConnAdapter.GetIsInTransaction: Boolean;
 begin
   Result := Self.FInTransaction;
 end;
 
 function TBaseFireDACConnAdapter.Query(const ASQL: string;
-  const AParams: TDictionary<string, TValue>): TDataSet;
+  const AParams: TDictionary<string, TValue> = nil): TDataSet;
 var
   Qry : TFDQuery;
 begin
@@ -152,7 +165,9 @@ begin
     Qry.Connection := FConn;
     Qry.Sql.Text := ASQL;
     try
-      BindParams(Qry.Params, AParams);
+      if Assigned(AParams) then
+        BindParams(Qry.Params, AParams);
+
       Qry.Prepare;
       Qry.Open();
       Qry.Unprepare;
@@ -182,6 +197,11 @@ begin
   finally
     FCritical.Release;
   end;
+end;
+
+procedure TBaseFireDACConnAdapter.setConnType(const aConn: TConnType);
+begin
+  Self.FConnType := aConn;
 end;
 
 function TBaseFireDACConnAdapter.StartTransaction: Boolean;

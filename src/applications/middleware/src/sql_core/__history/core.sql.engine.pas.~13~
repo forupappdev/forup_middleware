@@ -46,18 +46,22 @@ function TFUPORM<T>.Find(ID: Variant): T;
 var
   aEntity : TBaseEntity;
 begin
+  aEntity := TBaseEntity.CreateEntity;
+  aEntity := aEntity.MorphinCreate<T>;
+
+
 
   Result := aEntity as T;
 end;
 
 function TFUPORM<T>.Find(aCrit: TCriterion): TObjectList<T>;
 begin
-
+  Result := TObjectList<T>.Create;
 end;
 
 function TFUPORM<T>.Save(AObj: T): Boolean;
 begin
-
+  Result := True;
 end;
 
 end.
