@@ -13,3 +13,7 @@ src/containers/mongoerp/mongo_data/WiredTiger.wt
 *.0000000006
 src/containers/mongoerp/mongo_data/diagnostic.data/metrics.2025-10-21T04-02-17Z-00000
 src/containers/mongoerp/mongo_data/diagnostic.data/metrics.interim
+/src/applications/middleware/src/orm/connections/__history
+/src/applications/middleware/src/sql_core/__history
+/src/applications/middleware/src/Win64/Debug/dcu
+/src/applications/middleware/src/sql_core/__history
