@@ -40,6 +40,7 @@ const
   SELECT_SCOPE = 'SELECT %s FROM %s';
   UPDATE_SCOPE = 'UPDATE %s SET %s';
   INSERT_SCOPE = 'INSERT INTO %s (%s) VALUES (%s)';
+  INSERT_SCOPE_SQL = 'INSERT INTO %s (%s) OUTPUT INSERTED.%s VALUES (%s)';
   DELETE_SCOPE = 'DELETE FROM %s';
 
 implementation
@@ -86,17 +87,60 @@ end;
 function TSQLBuilder.getInsertCMD: WideString;
 var
   final_cmd : WideString;
-
+  values_insert : string;
+  aPK, colVal : TPair<string, string>;
+  aPK_name : string;
 begin
   try
     if EntityFound(INFO_INSERTCMD) then
       begin
+        for aPK in Self._BaseEntity.PKColumns do
+          begin
+            aPK_name := aPK.Key;
+            Break;
+          end;
+
+        values_insert := EmptyStr;
+        for colVal in Self._BaseEntity.ColumnsValues do
+          begin
+            if not (Self._BaseEntity.PKColumns.ContainsKey(colVal.Key)) then
+              begin
+                values_insert := concat(values_insert, colVal.Value, ',');
+              end;
+          end;
+
+        SetLength(values_insert, Length(values_insert)-1);
         final_cmd := Format(INSERT_SCOPE,[
           Self._BaseEntity.TableName,
           Self._BaseEntity.InsrtFields,
-          ''
+          values_insert
         ]);
-        Result := final_cmd;
+
+
+        case Self.ConnType of
+          ctPostgreSQL, ctFirebird: begin
+            final_cmd := final_cmd + ' RETURNING '+aPK_name+';';
+          end;
+          ctORACLE: begin
+             final_cmd := final_cmd + ' RETURNING '+aPK_name+' INTO :lastid;';
+          end;
+          ctSQLServer: begin
+            final_cmd := Format(INSERT_SCOPE_SQL,[
+              Self._BaseEntity.TableName,
+              Self._BaseEntity.InsrtFields,
+              aPK_name,
+              values_insert
+            ]);
+          end;
+          ctMySQL: begin
+            final_cmd := final_cmd + '; SELECT LAST_INSERT_ID();';
+          end;
+          ctSQLite: begin
+            final_cmd := final_cmd + '; SELECT last_insert_rowid();';
+          end
+          else final_cmd := final_cmd + ';';
+        end;
+        //Result := ;
       end
     else Result := EMPTYSTRING;
   except
@@ -157,7 +201,7 @@ begin
         for aColValues in Self._BaseEntity.ColumnsValues do
           begin
             if not aPKs.ContainsKey(aColValues.Key) then
-              update_body.Add(concat(aColValues.Key,' = ',aColValues.Value));
+              update_body.Add(concat(aColValues.Key,' = ',aColValues.Value, ','));
           end;
 
         update_body.Strings[update_body.Count-1] :=

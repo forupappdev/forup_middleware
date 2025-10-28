@@ -4,11 +4,13 @@ interface
 uses core.db.connection.intf, core.connection, System.SysUtils, System.Math, System.Classes,
   Data.DB, FireDAC.Comp.Client,  FireDAC.Stan.Intf,  FireDAC.Stan.Param,  FireDAC.Stan.Option,
   FireDAC.Stan.Error,  FireDAC.DatS,  FireDAC.Phys.Intf,  FireDAC.DApt.Intf,  FireDAC.DApt,
-  FireDAC.Stan.Async, System.SyncObjs, System.Rtti, Generics.Collections, System.Variants;
+  FireDAC.Stan.Async, System.SyncObjs, System.Rtti, Generics.Collections, System.Variants,
+  forup.util.constants;
 
 type
   TBaseFireDACConnAdapter = class(TInterfacedObject, IFUPConnection)
     private
+      FConnType : TConnType;
       FConn : TFDConnection;
       FInTransaction: Boolean;
       FCritical: TCriticalSection;
@@ -32,10 +34,10 @@ implementation
 
 { TBaseFireDACConnAdapter }
 
+
 procedure TBaseFireDACConnAdapter.BindParams(AParams: TFDParams;
   const AValues : TDictionary<string, TValue>);
 var
-  I: Integer;
   ParamName: string;
   AValue : TPair<string, TValue>;
   ParamValue: TValue;
@@ -108,6 +110,7 @@ var
   aCMD : TFDCommand;
 begin
   FCritical.Acquire;
+  Result := -1;
   try
     aCMD := TFDCommand.Create(nil);
     try
@@ -146,16 +149,25 @@ var
   Qry : TFDQuery;
 begin
   FCritical.Acquire;
+  Result := nil;
   try
     Qry := TFDQuery.Create(nil);
     Qry.Connection := FConn;
     Qry.Sql.Text := ASQL;
-    BindParams(Qry.Params, AParams);
-    Qry.Prepare;
-    Qry.Open();
-    Qry.Unprepare;
-  finally
+    try
+      BindParams(Qry.Params, AParams);
+      Qry.Prepare;
+      Qry.Open();
+      Qry.Unprepare;
+      Result := Qry;
+    except
+      on e : exception do
+        begin
 
+        end;
+    end;
+  finally
+    FCritical.Release;
   end;
 
 end;

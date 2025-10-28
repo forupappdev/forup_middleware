@@ -12,9 +12,8 @@ type
     function Commit: Boolean;
     function Rollback: Boolean;
 
-    function Execute(const ASQL: string; const AParams: TDictionary<string, TValue> = nil): Integer;
-    function Query(const ASQL: string; const AParams: TDictionary<string, TValue> = nil): TDataSet;
-    function Activate(const ASQL: string; const AParams: TDictionary<string, TValue> = nil): TDataSet;
+    function Execute(const ASQL: string; const AParams: TDictionary<string, TValue>): Integer;
+    function Query(const ASQL: string; const AParams: TDictionary<string, TValue>): TDataSet;
 
     function GetIsInTransaction: Boolean;
     function GetConnectionName: string;
