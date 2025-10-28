@@ -17,3 +17,5 @@ src/containers/mongoerp/mongo_data/diagnostic.data/metrics.interim
 /src/applications/middleware/src/sql_core/__history
 /src/applications/middleware/src/Win64/Debug/dcu
 /src/applications/middleware/src/sql_core/__history
+*.exe
+*.rsm

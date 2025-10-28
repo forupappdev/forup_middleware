@@ -27,6 +27,7 @@ type
 
       function Execute(const ASQL: string; const AParams: TDictionary<string, TValue> = nil): Integer;
       function Query(const ASQL: string; const AParams: TDictionary<string, TValue> = nil): TDataSet;
+      function Activate(const ASQL: string; const AParams: TDictionary<string, TValue> = nil): TDataSet;
 
       function GetIsInTransaction: Boolean;
       function GetConnectionName: string;
@@ -36,6 +37,36 @@ implementation
 
 { TBaseFireDACConnAdapter }
 
+
+function TBaseFireDACConnAdapter.Activate(const ASQL: string;
+  const AParams: TDictionary<string, TValue>): TDataSet;
+var
+  Qry : TFDQuery;
+begin
+  FCritical.Acquire;
+  Result := nil;
+  try
+    Qry := TFDQuery.Create(nil);
+    Qry.Connection := FConn;
+    Qry.Sql.Text := ASQL;
+    try
+      if Assigned(AParams) then
+        BindParams(Qry.Params, AParams);
+
+      Qry.Prepare;
+      Qry.Active := True;
+      Qry.Unprepare;
+      Result := Qry;
+    except
+      on e : exception do
+        begin
+
+        end;
+    end;
+  finally
+    FCritical.Release;
+  end;
+end;
 
 procedure TBaseFireDACConnAdapter.BindParams(AParams: TFDParams;
   const AValues : TDictionary<string, TValue>);

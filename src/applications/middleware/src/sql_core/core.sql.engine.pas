@@ -16,7 +16,7 @@ type
     constructor Create(AConn: IFUPConnection);
 
     function Find(ID: Variant): T; overload; virtual;
-    function Find(aCrit : TDBCriteria) : TObjectList<T>; overload; virtual;
+    function Find(AObj: T) : TObjectList<T>; overload; virtual;
     function Save(AObj: T): Boolean; virtual;
     function Delete(AObj: T): Boolean; virtual;
     function All: TObjectList<T>; virtual;
@@ -50,7 +50,6 @@ function TFUPORM<T>.Find(ID: Variant): T;
 var
   aEntity : TBaseEntity;
   pk : TPair<string, string>;
-  aCrit : TDBCriteria;
   queryResult : TDataSet;
 begin
   try
@@ -58,28 +57,26 @@ begin
     aEntity := aEntity.MorphinCreate<T>;
 
     _Builder.BaseEntity := aEntity;
-    aCrit := TDBCriteria.Create;
 
     for pk in aEntity.PKColumns do
       begin
-        aCrit.Add(TCriterion.Create(pk.Key, '=', ID));
+        _Builder.BaseEntity.BaseCriteria.Add(TCriterion.Create(pk.Key, '=', ID));
       end;
 
     queryResult := FConn.Query(
       concat(_Builder.SelectEntity
       , SEPARATOR
-      , aCrit.CriteriaBuilt.Text));
+      , _Builder.BaseEntity.BaseCriteria.CriteriaBuilt.Text));
 
     aEntity.ClearEntity;
     aEntity.LoadFromDataSetLine(queryResult);
     Result := aEntity as T;
   finally
-    FreeAndNil(aCrit);
     FreeAndNil(queryResult);
   end;
 end;
 
-function TFUPORM<T>.Find(aCrit: TDBCriteria): TObjectList<T>;
+function TFUPORM<T>.Find(AObj: T): TObjectList<T>;
 var
   aEntity : TBaseEntity;
   queryCMD : WideString;
@@ -87,10 +84,12 @@ var
 begin
   try
     Result := TObjectList<T>.Create;
+    aEntity := TBaseEntity.CreateEntity;
+    aEntity := aEntity.MorphinCreate<T>;
     _Builder.BaseEntity := aEntity;
 
     queryCMD := Concat(_Builder.SelectEntity, SEPARATOR,
-    aCrit.CriteriaBuilt.Text);
+    _Builder.BaseEntity.BaseCriteria.CriteriaBuilt.Text);
 
     queryResult := FConn.Query(queryCMD, nil);
 
@@ -116,8 +115,44 @@ begin
 end;
 
 function TFUPORM<T>.Save(AObj: T): Boolean;
+var
+  aEntity : TBaseEntity;
+  queryCMD : WideString;
 begin
-  Result := True;
+  try
+    aEntity := TBaseEntity.CreateEntity;
+    aEntity := aEntity.MorphinCreate<T>;
+    aEntity.CloneFrom(TBaseEntity(AObj));
+    _Builder.BaseEntity := aEntity;
+
+    if _Builder.BaseEntity.IsPKSet then
+      begin
+        queryCMD := _Builder.UpdateEntity;
+        Result := (FConn.Execute(queryCMD) <> 0);
+      end
+    else
+      begin
+        queryCMD := _Builder.InsertEntity;
+        with FConn.Activate(queryCMD) do
+          begin
+            if IsEmpty then
+              begin
+                Result := False;
+              end
+            else
+              begin
+                TBaseEntity(AObj).PKColumns.AddOrSetValue(Fields[0].FieldName,
+                Fields[0].AsString);
+                Result := True;
+              end;
+          end;
+      end;
+  except
+    on e : exception do
+      begin
+        Result := False;
+      end;
+  end;
 end;
 
 end.

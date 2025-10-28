@@ -21,14 +21,17 @@ type
       function getDDL : TStringList;
       function getInsertFields : string;
       function getColumnAttribute<T : TCustomAttribute>(aColName : String) : T;
+      function _isPKSet : Boolean;
     public
       class procedure RegisterClass;
       constructor CreateEntity;
       function MorphinCreate<T : class> : TBaseEntity;
+      function getProperties : TArray<TRttiProperty>;
 
       procedure ClearEntity;
       procedure LoadFromDataSetLine(aDataSet : TDataSet);
-      function getProperties : TArray<TRttiProperty>;
+      procedure CloneFrom(aOrigin : TBaseEntity);
+      procedure CloneTo(aDestination : TBaseEntity);
     published
       property TableName : string read getTableName;
       property PKColumns : TDictionary<string, string> read getPKColumns;
@@ -38,6 +41,7 @@ type
       property ColumnsValues : TDictionary<string, string> read getColumnsValues;
       property DDL : TStringList read getDDL;
       property BaseCriteria: TDBCriteria read FBaseCriteria write FBaseCriteria;
+      property IsPKSet : Boolean read _isPKSet;
 
   end;
 
@@ -68,6 +72,60 @@ begin
   finally
     context.Free;
   end;
+end;
+
+procedure TBaseEntity.CloneFrom(aOrigin: TBaseEntity);
+var
+  aProp : TRttiProperty;
+  ctxOrigin, ctxDest : TRttiContext;
+  typOrigin, typDest : TRttiType;
+begin
+  Self.ClearEntity;
+
+  ctxOrigin := TRttiContext.Create;
+  ctxDest := TRttiContext.Create;
+
+  typOrigin := ctxOrigin.GetType(aOrigin.ClassType);
+  typDest := ctxDest.GetType(Self.ClassType);
+
+  if Self.ClassType = aOrigin.ClassType then
+    begin
+      for aProp in typOrigin.GetProperties do
+        begin
+          if aProp.IsWritable then
+            typDest.GetProperty(aProp.Name).SetValue(Self, aProp.GetValue(Self));
+        end;
+    end;
+
+  ctxOrigin.Free;
+  ctxDest.Free;
+end;
+
+procedure TBaseEntity.CloneTo(aDestination: TBaseEntity);
+var
+  aProp : TRttiProperty;
+  ctxOrigin, ctxDest : TRttiContext;
+  typOrigin, typDest : TRttiType;
+begin
+  aDestination.ClearEntity;
+
+  ctxOrigin := TRttiContext.Create;
+  ctxDest := TRttiContext.Create;
+
+  typOrigin := ctxOrigin.GetType(Self.ClassType);
+  typDest := ctxDest.GetType(aDestination.ClassType);
+
+  if Self.ClassType = aDestination.ClassType then
+    begin
+      for aProp in typDest.GetProperties do
+        begin
+          if aProp.IsWritable then
+            typDest.GetProperty(aProp.Name).SetValue(aDestination, aProp.GetValue(Self));
+        end;
+    end;
+
+  ctxOrigin.Free;
+  ctxDest.Free;
 end;
 
 constructor TBaseEntity.CreateEntity;
@@ -204,10 +262,7 @@ begin
                   TFunctions.GetFunctions.db_boolean(aProp.GetValue(Self).AsString, allowNull));
               tdPassword: Result.Add(colAttr.ColumnName,
                   TFunctions.GetFunctions.db_string(aProp.GetValue(Self).AsString, allowNull));
-              tdBlob: ;//Need to Analyse how to do this kind of type.
-              tdImage: ;//Need to Analyse how to do this kind of type.
-              tdFile: ;//Need to Analyse how to do this kind of type.
-              tdOID: ;//Need to Analyse how to do this kind of type.
+              tdBlob, tdImage, tdFile, tdOID: Result.Add(colAttr.ColumnName, Concat(':',colAttr.ColumnName));
             end;
           end;
       end;
@@ -365,6 +420,21 @@ end;
 class procedure TBaseEntity.RegisterClass;
 begin
   Self.FClassName := Self.ClassName;
+end;
+
+function TBaseEntity._isPKSet: Boolean;
+var
+  aPK : TPair<string, string>;
+begin
+  Result := False;
+  for aPK in Self.getPKColumns do
+    begin
+      if aPK.Value.IsEmpty = False then
+        begin
+          Result := True;
+          Break;
+        end;
+    end;
 end;
 
 end.
