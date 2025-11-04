@@ -120,7 +120,7 @@ begin
       for aProp in typDest.GetProperties do
         begin
           if aProp.IsWritable then
-            typDest.GetProperty(aProp.Name).SetValue(aDestination, aProp.GetValue(Self));
+            typOrigin.GetProperty(aProp.Name).SetValue(aDestination, aProp.GetValue(Self));
         end;
     end;
 

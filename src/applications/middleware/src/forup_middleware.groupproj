@@ -6,9 +6,6 @@
         <Projects Include="forup_mid_svc.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="test_project\fmdTest.dproj">
-            <Dependencies/>
-        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -26,23 +23,14 @@
     <Target Name="forup_mid_svc:Make">
         <MSBuild Projects="forup_mid_svc.dproj" Targets="Make"/>
     </Target>
-    <Target Name="fmdTest">
-        <MSBuild Projects="test_project\fmdTest.dproj"/>
-    </Target>
-    <Target Name="fmdTest:Clean">
-        <MSBuild Projects="test_project\fmdTest.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="fmdTest:Make">
-        <MSBuild Projects="test_project\fmdTest.dproj" Targets="Make"/>
-    </Target>
     <Target Name="Build">
-        <CallTarget Targets="forup_mid_svc;fmdTest"/>
+        <CallTarget Targets="forup_mid_svc"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="forup_mid_svc:Clean;fmdTest:Clean"/>
+        <CallTarget Targets="forup_mid_svc:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="forup_mid_svc:Make;fmdTest:Make"/>
+        <CallTarget Targets="forup_mid_svc:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

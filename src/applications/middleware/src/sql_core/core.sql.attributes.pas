@@ -110,6 +110,7 @@ type
   public
     constructor Create; overload;
     constructor Create(aColumns : TArray<TPK>); overload;
+    procedure Add(_PK : TPK);
   published
     property Columns: TArray<TPK> read FColumns;
   end;
@@ -246,6 +247,12 @@ begin
 end;
 
 { PrimaryKey }
+
+procedure PrimaryKey.Add(_PK: TPK);
+begin
+  SetLength(Self.FColumns, High(Self.FColumns)+1);
+  Self.FColumns[High(Self.FColumns)] := _PK;
+end;
 
 constructor PrimaryKey.Create(aColumns: TArray<TPK>);
 var

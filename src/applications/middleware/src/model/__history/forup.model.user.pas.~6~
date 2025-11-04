@@ -1,0 +1,42 @@
+unit forup.model.user;
+
+interface
+uses forup.util.types, forup.util.constants, forup.util.functions, core.sql.attributes,
+core.sql.entity;
+
+var
+  _PrimaryKey : PrimaryKey;
+
+type
+  {$M+}
+  [Table('auth_database','user','Unify the User login between modules')]
+  [_PrimaryKey]
+  TUser = class(TBaseEntity)
+  private
+    FId: string;
+    FUsername: string;
+    FFullname: string;
+    FEmail: string;
+    FPassword: string;
+    FCreated_at: TDateTime;
+    FUpdated_at: TDateTime;
+    FDeleted_at: TDateTime;
+
+    published
+      [Column('uid',tdChar,255, 'Unique ID for User', [doSelect], [NoInsert, Unique])]
+      [TPK('uid', tdChar, Insert)]
+      property Uid: string read FId write FId;
+
+      property Username: string read FUsername write FUsername;
+      property Fullname: string read FFullname write FFullname;
+      property Email: string read FEmail write FEmail;
+      property Password: string read FPassword write FPassword;
+      property Created_at: TDateTime read FCreated_at write FCreated_at;
+      property Updated_at: TDateTime read FUpdated_at write FUpdated_at;
+      property Deleted_at: TDateTime read FDeleted_at write FDeleted_at;
+
+  end;
+
+implementation
+
+end.
