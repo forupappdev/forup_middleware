@@ -16,7 +16,13 @@ uses
   forup.util.constants in 'lib\forup.util.constants.pas',
   core.sql.entity in 'sql_core\core.sql.entity.pas',
   core.sql.builder in 'sql_core\core.sql.builder.pas',
-  forup.util.types in 'lib\forup.util.types.pas';
+  forup.util.types in 'lib\forup.util.types.pas',
+  core.sql.engine in 'sql_core\core.sql.engine.pas',
+  core.connection in 'sql_core\core.connection.pas' {connCore: TDataModule},
+  core.db.connection.intf in 'orm\connections\core.db.connection.intf.pas',
+  core.db.connection.firedac.base in 'orm\connections\core.db.connection.firedac.base.pas',
+  forup.service.user in 'service\forup.service.user.pas',
+  forup.model.user in 'model\forup.model.user.pas';
 
 begin
   try

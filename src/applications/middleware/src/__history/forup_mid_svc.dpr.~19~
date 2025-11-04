@@ -21,16 +21,11 @@ uses
   core.connection in 'sql_core\core.connection.pas' {connCore: TDataModule},
   core.db.connection.intf in 'orm\connections\core.db.connection.intf.pas',
   core.db.connection.firedac.base in 'orm\connections\core.db.connection.firedac.base.pas',
-  forup.model.user in 'model\forup.model.user.pas',
   forup.service.user in 'service\forup.service.user.pas';
-
-var
-  UserService : TUserService;
 
 begin
   try
     { TODO -oUser -cConsole Main : Insert code here }
-    UserService := TUserService.Create;
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);

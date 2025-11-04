@@ -1,0 +1,15 @@
+unit forup.service.user;
+
+interface
+uses forup.model.user, forup.util.constants, forup.util.types, forup.util.functions,
+core.sql.engine, JSON, JSON.BSON, JSON.Builders, JSON.Types, JSON.Readers;
+
+type
+  TUserService = class(TFUPORM<TUser>)
+    public
+
+  end;
+
+implementation
+
+end.
