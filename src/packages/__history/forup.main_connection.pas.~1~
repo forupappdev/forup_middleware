@@ -1,0 +1,25 @@
+unit forup.main_connection;
+
+interface
+
+uses
+  System.SysUtils, System.Classes;
+
+type
+  Tmain_connection = class(TDataModule)
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  main_connection: Tmain_connection;
+
+implementation
+
+{%CLASSGROUP 'System.Classes.TPersistent'}
+
+{$R *.dfm}
+
+end.

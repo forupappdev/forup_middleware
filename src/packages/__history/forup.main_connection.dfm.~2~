@@ -1,0 +1,33 @@
+object main_connection: Tmain_connection
+  Height = 611
+  Width = 800
+  object fupManager: TFDManager
+    FormatOptions.AssignedValues = [fvMapRules]
+    FormatOptions.OwnMapRules = True
+    FormatOptions.MapRules = <>
+    Active = True
+    Left = 88
+    Top = 56
+  end
+  object fupWaitCursor: TFDGUIxWaitCursor
+    Provider = 'Console'
+    Left = 88
+    Top = 120
+  end
+  object fupPostgre: TFDConnection
+    Left = 200
+    Top = 56
+  end
+  object fupMongo: TFDConnection
+    Left = 200
+    Top = 112
+  end
+  object fupMySQL: TFDConnection
+    Left = 200
+    Top = 176
+  end
+  object fupSQLite: TFDConnection
+    Left = 200
+    Top = 240
+  end
+end

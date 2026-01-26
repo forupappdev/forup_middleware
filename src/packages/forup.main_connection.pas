@@ -1,0 +1,60 @@
+unit forup.main_connection;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+  FireDAC.Phys, FireDAC.ConsoleUI.Wait, FireDAC.Stan.Pool, FireDAC.Stan.Async,
+  Data.DB, FireDAC.Comp.Client, FireDAC.Comp.UI, FireDAC.Phys.MySQLDef,
+  FireDAC.Phys.PGDef, FireDAC.Phys.MongoDBDef, FireDAC.Stan.ExprFuncs,
+  FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.Phys.SQLiteDef, FireDAC.Phys.SQLite,
+  FireDAC.Phys.MongoDB, FireDAC.Phys.PG, FireDAC.Phys.MySQL, FireDAC.Stan.Param,
+  FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Phys.FBDef,
+  FireDAC.Phys.IBBase, FireDAC.Phys.FB, FireDAC.Comp.DataSet;
+
+type
+  Tmain_connection = class(TDataModule)
+    fupManager: TFDManager;
+    fupWaitCursor: TFDGUIxWaitCursor;
+    fupPostgre: TFDConnection;
+    fupMongo: TFDConnection;
+    fupMySQL: TFDConnection;
+    fupSQLite: TFDConnection;
+    fupPGTransaction: TFDTransaction;
+    fupMongoTransaction: TFDTransaction;
+    fupMySQLTransaction: TFDTransaction;
+    fupSQLiteTransaction: TFDTransaction;
+    fupMySQLLink: TFDPhysMySQLDriverLink;
+    fupPGLink: TFDPhysPgDriverLink;
+    fupMongoLink: TFDPhysMongoDriverLink;
+    fupSQLiteLink: TFDPhysSQLiteDriverLink;
+    fupPGCommand: TFDCommand;
+    fupMongoCommand: TFDCommand;
+    fupMySQLCommand: TFDCommand;
+    fupSQLiteCommand: TFDCommand;
+    fupPGQryAux: TFDQuery;
+    fupMongoQryAux: TFDQuery;
+    fupMySQLQryAux: TFDQuery;
+    fupSQLLiteQryAux: TFDQuery;
+    fupFirebird: TFDConnection;
+    fupFirebirdTransaction: TFDTransaction;
+    fupFirebirdCommand: TFDCommand;
+    fupFirebirdQryAux: TFDQuery;
+    fupFirebirdLink: TFDPhysFBDriverLink;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  main_connection: Tmain_connection;
+
+implementation
+
+{%CLASSGROUP 'System.Classes.TPersistent'}
+
+{$R *.dfm}
+
+end.
