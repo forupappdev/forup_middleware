@@ -1,0 +1,152 @@
+unit forup.main_connection;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+  FireDAC.Phys, FireDAC.ConsoleUI.Wait, FireDAC.Stan.Pool, FireDAC.Stan.Async,
+  Data.DB, FireDAC.Comp.Client, FireDAC.Comp.UI, FireDAC.Phys.MySQLDef,
+  FireDAC.Phys.PGDef, FireDAC.Phys.MongoDBDef, FireDAC.Stan.ExprFuncs,
+  FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.Phys.SQLiteDef, FireDAC.Phys.SQLite,
+  FireDAC.Phys.MongoDB, FireDAC.Phys.PG, FireDAC.Phys.MySQL, FireDAC.Stan.Param,
+  FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Phys.FBDef,
+  FireDAC.Phys.IBBase, FireDAC.Phys.FB, FireDAC.Comp.DataSet,
+  Generics.Collections, System.IOUtils, System.IniFiles;
+
+type
+  {$M+}
+  TEnviLoader = class(TObject)
+  private
+    FDBParam: TDictionary<string, TStringList>;
+    FDeploying: Boolean;
+    FManagerFile : string;
+    public
+      constructor Create_Loader;
+      procedure LoadDrivers;
+    published
+      property DBParam: TDictionary<string,TStringList> read FDBParam write FDBParam;
+      property Deploying: Boolean read FDeploying write FDeploying;
+      property ManagerFile: string read FManagerFile write FManagerFile;
+  end;
+  Tmain_connection = class(TDataModule)
+    fupManager: TFDManager;
+    fupWaitCursor: TFDGUIxWaitCursor;
+    fupMySQLLink: TFDPhysMySQLDriverLink;
+    fupPGLink: TFDPhysPgDriverLink;
+    fupMongoLink: TFDPhysMongoDriverLink;
+    fupSQLiteLink: TFDPhysSQLiteDriverLink;
+    fupFirebirdLink: TFDPhysFBDriverLink;
+    procedure DataModuleCreate(Sender: TObject);
+  private
+    { Private declarations }
+    EnvLoader : TEnviLoader;
+  public
+    { Public declarations }
+
+  end;
+
+var
+  main_connection: Tmain_connection;
+
+implementation
+
+{%CLASSGROUP 'System.Classes.TPersistent'}
+
+uses forup.constants;
+
+{$R *.dfm}
+
+{ TEnviLoader }
+
+constructor TEnviLoader.Create_Loader;
+var
+  aCfg : TStringList;
+begin
+  inherited Create;
+  Self.FDBParam := TDictionary<string, TStringList>.Create;
+  Self.FDeploying := not TFile.Exists(CONF_DB_ENV);
+  Self.FManagerFile := EmptyStr;
+
+  if Self.FDeploying then
+    begin
+      aCfg := TStringList.Create;
+      aCfg.Clear;
+      aCfg.Add('[FDDrivers.ini]');
+      aCfg.Add('Encoding=UTF8');
+      aCfg.Add('');
+
+      //ENTITY DATABASE
+      Self.DBParam.Add(PG_KEY,TStringList.Create);
+      Self.DBParam.Items[PG_KEY].Clear;
+      Self.DBParam.Items[PG_KEY].Add('[FUP_ENTITY]');
+      Self.DBParam.Items[PG_KEY].Add('DriverID=PG');
+      Self.DBParam.Items[PG_KEY].Add('Server=localhost');
+      Self.DBParam.Items[PG_KEY].Add('Port=5432');
+      Self.DBParam.Items[PG_KEY].Add('User_Name=forup_db_admin');
+      Self.DBParam.Items[PG_KEY].Add('Password='+TDBConstants.PG_Admin_Pwd);
+      Self.DBParam.Items[PG_KEY].Add('Database=postgres');
+      Self.DBParam.Items[PG_KEY].Add('CharacterSet=UTF8');
+      Self.DBParam.Items[PG_KEY].Add('OidAsBlob=Yes');
+      Self.DBParam.Items[PG_KEY].Add('Pooled=True');
+      Self.DBParam.Items[PG_KEY].Add('MetaDefSchema=omini_middleware');
+      Self.DBParam.Items[PG_KEY].Add('POOL_CleanupTimeout=60000');
+      Self.DBParam.Items[PG_KEY].Add('POOL_ExpireTimeout=30000');
+      Self.DBParam.Items[PG_KEY].Add('POOL_MaximumItems=100');
+
+      aCfg.AddStrings(Self.DBParam.Items[PG_KEY]);
+      aCfg.Add('');
+
+
+      //LOG DATABASE
+      Self.DBParam.Add(MONGO_KEY,TStringList.Create);
+      Self.DBParam.Items[MONGO_KEY].Clear;
+      Self.DBParam.Items[MONGO_KEY].Add('[FUP_LOG]');
+      Self.DBParam.Items[MONGO_KEY].Add('DriverID=Mongo');
+      Self.DBParam.Items[MONGO_KEY].Add('Server=localhost');
+      Self.DBParam.Items[MONGO_KEY].Add('User_Name=admin');
+      Self.DBParam.Items[MONGO_KEY].Add('Password='+TDBConstants.Mongo_Admin_Pwd);
+      Self.DBParam.Items[MONGO_KEY].Add('Database=omini_log');
+      Self.DBParam.Items[MONGO_KEY].Add('Pooled=True');
+      Self.DBParam.Items[MONGO_KEY].Add('POOL_CleanupTimeout=60000');
+      Self.DBParam.Items[MONGO_KEY].Add('POOL_ExpireTimeout=30000');
+      Self.DBParam.Items[MONGO_KEY].Add('POOL_MaximumItems=100');
+      aCfg.AddStrings(Self.DBParam.Items[MONGO_KEY]);
+      aCfg.Add('');
+
+      aCfg.SaveToFile(CONF_DB_ENV);
+      aCfg.Free;
+    end;
+
+  Self.FManagerFile := CONF_DB_ENV;
+end;
+
+procedure Tmain_connection.DataModuleCreate(Sender: TObject);
+begin
+  EnvLoader := TEnviLoader.Create_Loader;
+  EnvLoader.LoadDrivers;
+
+  fupManager.Active := False;
+  fupManager.ConnectionDefFileName := EnvLoader.ManagerFile;
+end;
+
+procedure TEnviLoader.LoadDrivers;
+begin
+  with main_connection do
+    begin
+      {$IFDEF MSWINDOWS}
+        fupPGLink.VendorLib := TPath.Combine([
+          TDirectory.GetCurrentDirectory,
+          TDBConstants.PGDriver,
+          'libpq.dll'
+        ]);
+        fupMongoLink.VendorLib := TPath.Combine([
+          TDirectory.GetCurrentDirectory,
+          TDBConstants.MongoDriver,
+          'libmongoc-1.0.dll'
+        ]);
+      {$ENDIF}
+    end;
+end;
+
+end.

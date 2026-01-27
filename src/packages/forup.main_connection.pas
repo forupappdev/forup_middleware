@@ -11,41 +11,39 @@ uses
   FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.Phys.SQLiteDef, FireDAC.Phys.SQLite,
   FireDAC.Phys.MongoDB, FireDAC.Phys.PG, FireDAC.Phys.MySQL, FireDAC.Stan.Param,
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Phys.FBDef,
-  FireDAC.Phys.IBBase, FireDAC.Phys.FB, FireDAC.Comp.DataSet;
+  FireDAC.Phys.IBBase, FireDAC.Phys.FB, FireDAC.Comp.DataSet,
+  Generics.Collections, System.IOUtils, System.IniFiles;
 
 type
+  {$M+}
+  TEnviLoader = class(TObject)
+  private
+    FDBParam: TDictionary<string, TStringList>;
+    FDeploying: Boolean;
+    FManagerFile : string;
+    public
+      constructor Create_Loader;
+      procedure LoadDrivers(aModule : TDataModule);
+    published
+      property DBParam: TDictionary<string,TStringList> read FDBParam write FDBParam;
+      property Deploying: Boolean read FDeploying write FDeploying;
+      property ManagerFile: string read FManagerFile write FManagerFile;
+  end;
   Tmain_connection = class(TDataModule)
     fupManager: TFDManager;
     fupWaitCursor: TFDGUIxWaitCursor;
-    fupPostgre: TFDConnection;
-    fupMongo: TFDConnection;
-    fupMySQL: TFDConnection;
-    fupSQLite: TFDConnection;
-    fupPGTransaction: TFDTransaction;
-    fupMongoTransaction: TFDTransaction;
-    fupMySQLTransaction: TFDTransaction;
-    fupSQLiteTransaction: TFDTransaction;
     fupMySQLLink: TFDPhysMySQLDriverLink;
     fupPGLink: TFDPhysPgDriverLink;
     fupMongoLink: TFDPhysMongoDriverLink;
     fupSQLiteLink: TFDPhysSQLiteDriverLink;
-    fupPGCommand: TFDCommand;
-    fupMongoCommand: TFDCommand;
-    fupMySQLCommand: TFDCommand;
-    fupSQLiteCommand: TFDCommand;
-    fupPGQryAux: TFDQuery;
-    fupMongoQryAux: TFDQuery;
-    fupMySQLQryAux: TFDQuery;
-    fupSQLLiteQryAux: TFDQuery;
-    fupFirebird: TFDConnection;
-    fupFirebirdTransaction: TFDTransaction;
-    fupFirebirdCommand: TFDCommand;
-    fupFirebirdQryAux: TFDQuery;
     fupFirebirdLink: TFDPhysFBDriverLink;
+    procedure DataModuleCreate(Sender: TObject);
   private
     { Private declarations }
+    EnvLoader : TEnviLoader;
   public
     { Public declarations }
+
   end;
 
 var
@@ -55,6 +53,117 @@ implementation
 
 {%CLASSGROUP 'System.Classes.TPersistent'}
 
+uses forup.constants;
+
 {$R *.dfm}
+
+{ TEnviLoader }
+
+constructor TEnviLoader.Create_Loader;
+var
+  aCfg : TStringList;
+  localPG_Dir, localMongo_Dir : string;
+begin
+  inherited Create;
+  Self.FDBParam := TDictionary<string, TStringList>.Create;
+  Self.FDeploying := not TFile.Exists(CONF_DB_ENV);
+  Self.FManagerFile := EmptyStr;
+
+  localPG_Dir := TPath.Combine([
+    TDirectory.GetCurrentDirectory,
+    TDBConstants.PGDriver]);
+
+  localMongo_Dir := TPath.Combine([
+    TDirectory.GetCurrentDirectory,
+    TDBConstants.MongoDriver]);
+
+  if not TDirectory.Exists(localPG_Dir) then
+    TDirectory.CreateDirectory(localPG_Dir);
+
+  if not TDirectory.Exists(localMongo_Dir) then
+    TDirectory.CreateDirectory(localMongo_Dir);
+
+  if Self.FDeploying then
+    begin
+      aCfg := TStringList.Create;
+      aCfg.Clear;
+      aCfg.Add('[FDDrivers.ini]');
+      aCfg.Add('Encoding=UTF8');
+      aCfg.Add('');
+
+      //ENTITY DATABASE
+      Self.DBParam.Add(PG_KEY,TStringList.Create);
+      Self.DBParam.Items[PG_KEY].Clear;
+      Self.DBParam.Items[PG_KEY].Add('[FUP_ENTITY]');
+      Self.DBParam.Items[PG_KEY].Add('DriverID=PG');
+      Self.DBParam.Items[PG_KEY].Add('Server=localhost');
+      Self.DBParam.Items[PG_KEY].Add('Port=5432');
+      Self.DBParam.Items[PG_KEY].Add('User_Name=forup_db_admin');
+      Self.DBParam.Items[PG_KEY].Add('Password='+TDBConstants.PG_Admin_Pwd);
+      Self.DBParam.Items[PG_KEY].Add('Database=postgres');
+      Self.DBParam.Items[PG_KEY].Add('CharacterSet=UTF8');
+      Self.DBParam.Items[PG_KEY].Add('OidAsBlob=Yes');
+      Self.DBParam.Items[PG_KEY].Add('Pooled=True');
+      Self.DBParam.Items[PG_KEY].Add('MetaDefSchema=omini_middleware');
+      Self.DBParam.Items[PG_KEY].Add('POOL_CleanupTimeout=60000');
+      Self.DBParam.Items[PG_KEY].Add('POOL_ExpireTimeout=30000');
+      Self.DBParam.Items[PG_KEY].Add('POOL_MaximumItems=100');
+
+      aCfg.AddStrings(Self.DBParam.Items[PG_KEY]);
+      aCfg.Add('');
+
+
+      //LOG DATABASE
+      Self.DBParam.Add(MONGO_KEY,TStringList.Create);
+      Self.DBParam.Items[MONGO_KEY].Clear;
+      Self.DBParam.Items[MONGO_KEY].Add('[FUP_LOG]');
+      Self.DBParam.Items[MONGO_KEY].Add('DriverID=Mongo');
+      Self.DBParam.Items[MONGO_KEY].Add('Server=localhost');
+      Self.DBParam.Items[MONGO_KEY].Add('User_Name=admin');
+      Self.DBParam.Items[MONGO_KEY].Add('Password='+TDBConstants.Mongo_Admin_Pwd);
+      Self.DBParam.Items[MONGO_KEY].Add('Database=omini_log');
+      Self.DBParam.Items[MONGO_KEY].Add('Pooled=True');
+      Self.DBParam.Items[MONGO_KEY].Add('POOL_CleanupTimeout=60000');
+      Self.DBParam.Items[MONGO_KEY].Add('POOL_ExpireTimeout=30000');
+      Self.DBParam.Items[MONGO_KEY].Add('POOL_MaximumItems=100');
+      aCfg.AddStrings(Self.DBParam.Items[MONGO_KEY]);
+      aCfg.Add('');
+
+      aCfg.SaveToFile(CONF_DB_ENV);
+      aCfg.Free;
+      Self.FDeploying := False;
+    end;
+
+  Self.FManagerFile := CONF_DB_ENV;
+end;
+
+procedure Tmain_connection.DataModuleCreate(Sender: TObject);
+begin
+  EnvLoader := TEnviLoader.Create_Loader;
+  EnvLoader.LoadDrivers(Self);
+
+  fupManager.Active := False;
+  fupManager.ConnectionDefFileName := EnvLoader.ManagerFile;
+  fupManager.LoadConnectionDefFile;
+end;
+
+procedure TEnviLoader.LoadDrivers(aModule : TDataModule);
+begin
+  with Tmain_connection(aModule) do
+    begin
+      {$IFDEF MSWINDOWS}
+        fupPGLink.VendorLib := TPath.Combine([
+          TDirectory.GetCurrentDirectory,
+          TDBConstants.PGDriver,
+          'libpq.dll'
+        ]);
+        fupMongoLink.VendorLib := TPath.Combine([
+          TDirectory.GetCurrentDirectory,
+          TDBConstants.MongoDriver,
+          'libmongoc-1.0.dll'
+        ]);
+      {$ENDIF}
+    end;
+end;
 
 end.

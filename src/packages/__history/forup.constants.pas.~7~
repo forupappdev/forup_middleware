@@ -1,0 +1,23 @@
+unit forup.constants;
+
+interface
+uses System.Classes, System.SysUtils, System.StrUtils, System.Math, System.IOUtils;
+
+const
+  CONF_DB_ENV = 'cfg.ini';
+
+type
+  TDrvPath = class
+    public
+      class function PGDriver : String;
+  end;
+implementation
+
+{ TDrvPath }
+
+class function TDrvPath.PGDriver: String;
+begin
+  Result := TPath.Combine('drv','pg');
+end;
+
+end.

@@ -1,0 +1,13 @@
+unit forup.constants;
+
+interface
+uses System.Classes, System.SysUtils, System.StrUtils, System.Math, System.IOUtils;
+
+const
+  CONF_DB_ENV = 'cfg.ini';
+  PG_DRIVER = Concat(
+    '',''
+  );
+implementation
+
+end.

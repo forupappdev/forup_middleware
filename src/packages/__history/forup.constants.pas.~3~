@@ -1,0 +1,14 @@
+unit forup.constants;
+
+interface
+uses System.Classes, System.SysUtils, System.StrUtils, System.Math;
+
+const
+  {$IFDEF LINUX}
+    CONF_DB_ENV = '.env';
+  {$ELSE IF MSWINDOWS}
+    CONF_DB_ENV = 'conn.ini';
+  {$ENDIF}
+implementation
+
+end.

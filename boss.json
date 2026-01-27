@@ -1,0 +1,17 @@
+{
+	"name": "container_project",
+	"description": "ForUp Middleware",
+	"version": "1.0.0",
+	"homepage": "app.forupsolucoes.com.br",
+	"mainsrc": "./src",
+	"projects": [],
+	"dependencies": {
+		"github.com/hashload/horse": "^3.1.9",
+		"github.com/hashload/horse-basic-auth": "^1.2.5",
+		"github.com/hashload/horse-compression": "^1.1.13",
+		"github.com/hashload/horse-cors": "^1.0.7",
+		"github.com/hashload/horse-jwt": "^2.0.18",
+		"github.com/hashload/horse-logger": "^2.0.9",
+		"github.com/hashload/jhonson": "^1.2.1"
+	}
+}

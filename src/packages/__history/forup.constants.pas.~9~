@@ -1,0 +1,37 @@
+unit forup.constants;
+
+interface
+uses System.Classes, System.SysUtils, System.StrUtils, System.Math, System.IOUtils;
+
+const
+  CONF_DB_ENV = 'cfg.ini';
+  PG_KEY = 'POSTGREDB';
+  MONGO_KEY = 'MONGODB';
+
+type
+  TDrvPath = class
+    public
+      class function PGDriver : String;
+      class function MongoDriver : String;
+      class function MySQLDriver : String;
+  end;
+implementation
+
+{ TDrvPath }
+
+class function TDrvPath.MongoDriver: String;
+begin
+  Result := TPath.Combine('drv','mongo');
+end;
+
+class function TDrvPath.MySQLDriver: String;
+begin
+  Result := TPath.Combine('drv','mysql');
+end;
+
+class function TDrvPath.PGDriver: String;
+begin
+  Result := TPath.Combine('drv','pg');
+end;
+
+end.
