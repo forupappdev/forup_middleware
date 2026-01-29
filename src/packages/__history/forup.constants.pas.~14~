@@ -39,7 +39,7 @@ end;
 
 class function TDBConstants.PGDriver(fullPath : Boolean): String;
 begin
-  Result := TPath.Combine('drv',IfThen(fullPath,'pg',EmptyStr));
+  Result := TPath.Combine('drv',IfThen(fullPath,'pg'+TPath.DirectorySeparatorChar+'lib',EmptyStr));
 end;
 
 class function TDBConstants.PG_Admin_Pwd: String;

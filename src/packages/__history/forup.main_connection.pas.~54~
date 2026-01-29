@@ -3,7 +3,7 @@ unit forup.main_connection;
 interface
 
 uses
-  System.SysUtils, System.Classes, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  System.SysUtils, System.Classes, System.Types, FireDAC.Stan.Intf, FireDAC.Stan.Option,
   FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
   FireDAC.Phys, FireDAC.ConsoleUI.Wait, FireDAC.Stan.Pool, FireDAC.Stan.Async,
   Data.DB, FireDAC.Comp.Client, FireDAC.Comp.UI, FireDAC.Phys.MySQLDef,
@@ -12,7 +12,7 @@ uses
   FireDAC.Phys.MongoDB, FireDAC.Phys.PG, FireDAC.Phys.MySQL, FireDAC.Stan.Param,
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Phys.FBDef,
   FireDAC.Phys.IBBase, FireDAC.Phys.FB, FireDAC.Comp.DataSet,
-  Generics.Collections, System.IOUtils, System.IniFiles;
+  Generics.Collections, System.IOUtils, System.IniFiles, System.Zip;
 
 type
   {$M+}
@@ -23,7 +23,8 @@ type
     FManagerFile : string;
     public
       constructor Create_Loader;
-      procedure LoadDrivers;
+      procedure LoadResouce(aLoadPG, aLoadMongo : boolean);
+      procedure LoadDrivers(aModule : TDataModule);
     published
       property DBParam: TDictionary<string,TStringList> read FDBParam write FDBParam;
       property Deploying: Boolean read FDeploying write FDeploying;
@@ -37,6 +38,7 @@ type
     fupMongoLink: TFDPhysMongoDriverLink;
     fupSQLiteLink: TFDPhysSQLiteDriverLink;
     fupFirebirdLink: TFDPhysFBDriverLink;
+    FDConnection1: TFDConnection;
     procedure DataModuleCreate(Sender: TObject);
   private
     { Private declarations }
@@ -62,11 +64,26 @@ uses forup.constants;
 constructor TEnviLoader.Create_Loader;
 var
   aCfg : TStringList;
+  localPG_Dir, localMongo_Dir : string;
 begin
   inherited Create;
   Self.FDBParam := TDictionary<string, TStringList>.Create;
   Self.FDeploying := not TFile.Exists(CONF_DB_ENV);
   Self.FManagerFile := EmptyStr;
+
+  localPG_Dir := TPath.Combine([
+    TDirectory.GetCurrentDirectory,
+    TDBConstants.PGDriver]);
+
+  localMongo_Dir := TPath.Combine([
+    TDirectory.GetCurrentDirectory,
+    TDBConstants.MongoDriver]);
+
+  if not TDirectory.Exists(localPG_Dir) then
+    TDirectory.CreateDirectory(localPG_Dir);
+
+  if not TDirectory.Exists(localMongo_Dir) then
+    TDirectory.CreateDirectory(localMongo_Dir);
 
   if Self.FDeploying then
     begin
@@ -116,6 +133,7 @@ begin
 
       aCfg.SaveToFile(CONF_DB_ENV);
       aCfg.Free;
+      Self.FDeploying := False;
     end;
 
   Self.FManagerFile := CONF_DB_ENV;
@@ -124,18 +142,43 @@ end;
 procedure Tmain_connection.DataModuleCreate(Sender: TObject);
 begin
   EnvLoader := TEnviLoader.Create_Loader;
+  EnvLoader.LoadDrivers(Self);
+
+  fupManager.Active := False;
+  fupManager.ConnectionDefFileName := EnvLoader.ManagerFile;
+  fupManager.LoadConnectionDefFile;
+
+  FDConnection1.Close;
+  FDConnection1.ConnectionDefName := 'FUP_ENTITY';
+  FDConnection1.Open;
 end;
 
-procedure TEnviLoader.LoadDrivers;
+procedure TEnviLoader.LoadDrivers(aModule : TDataModule);
+var
+  pgDriverExists, mongoDriverExists : Boolean;
 begin
-  with main_connection do
+  with Tmain_connection(aModule) do
     begin
       {$IFDEF MSWINDOWS}
-        fupPGLink.VendorLib := TPath.Combine([
+        pgDriverExists := TFile.Exists(TPath.Combine([
           TDirectory.GetCurrentDirectory,
           TDBConstants.PGDriver,
           'libpq.dll'
-        ]);
+        ]));
+
+        mongoDriverExists := TFile.Exists(TPath.Combine([
+          TDirectory.GetCurrentDirectory,
+          TDBConstants.MongoDriver,
+          'libmongoc-1.0.dll'
+        ]));
+        LoadResouce(not pgDriverExists, not mongoDriverExists);
+
+        fupPGLink.VendorLib := TPath.Combine([
+          TDirectory.GetCurrentDirectory,
+          TDBConstants.PGDriver,
+          'libpq.dll']);
+        fupPGLink.VendorLib := StringReplace(fupPGLink.VendorLib, PathDelim+PathDelim, PathDelim, [rfReplaceAll]);
+
         fupMongoLink.VendorLib := TPath.Combine([
           TDirectory.GetCurrentDirectory,
           TDBConstants.MongoDriver,
@@ -143,6 +186,30 @@ begin
         ]);
       {$ENDIF}
     end;
+end;
+
+procedure TEnviLoader.LoadResouce(aLoadPG, aLoadMongo : boolean);
+{$IFDEF MSWINDOWS}
+var
+  pgDrvRes : TResourceStream;
+  zipHandle : TZipFile;
+{$ENDIF}
+begin
+  {$IFDEF MSWINDOWS}
+    if aLoadPG then
+      begin
+        pgDrvRes := TResourceStream.Create(HInstance, 'PGDRVW64', RT_RCDATA);
+        zipHandle := TZipFile.Create;
+        zipHandle.Open(pgDrvRes, zmRead);
+
+        zipHandle.ExtractAll(
+          TPath.Combine([
+              TDirectory.GetCurrentDirectory,
+              TDBConstants.PGDriver(false)
+            ])
+        );
+      end;
+  {$ENDIF}
 end;
 
 end.

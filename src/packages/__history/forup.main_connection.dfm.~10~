@@ -36,7 +36,6 @@ object main_connection: Tmain_connection
     Top = 320
   end
   object FDConnection1: TFDConnection
-    LoginPrompt = False
     Left = 504
     Top = 112
   end

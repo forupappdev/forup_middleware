@@ -4,8 +4,6 @@ program mid_entity_sevice;
 
 {$R *.res}
 
-{$R *.dres}
-
 uses
   System.SysUtils,
   forup.log_unit in '..\packages\forup.log_unit.pas',
