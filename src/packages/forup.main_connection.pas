@@ -133,11 +133,13 @@ begin
       Self.DBParam.Items[MONGO_KEY].Add('Server=localhost');
       Self.DBParam.Items[MONGO_KEY].Add('User_Name=admin');
       Self.DBParam.Items[MONGO_KEY].Add('Password='+TDBConstants.Mongo_Admin_Pwd);
-      Self.DBParam.Items[MONGO_KEY].Add('Database=omini_log');
       Self.DBParam.Items[MONGO_KEY].Add('Pooled=True');
       Self.DBParam.Items[MONGO_KEY].Add('POOL_CleanupTimeout=60000');
       Self.DBParam.Items[MONGO_KEY].Add('POOL_ExpireTimeout=30000');
       Self.DBParam.Items[MONGO_KEY].Add('POOL_MaximumItems=100');
+      Self.DBParam.Items[MONGO_KEY].Add('UseSRV=False');
+      Self.DBParam.Items[MONGO_KEY].Add('MongoAdvanced=retryWrites=true&loadBalanced=false&'+
+        'connectTimeoutMS=10000&authSource=admin&authMechanism=SCRAM-SHA-1');
       aCfg.AddStrings(Self.DBParam.Items[MONGO_KEY]);
       aCfg.Add('');
 

@@ -29,7 +29,7 @@ end;
 
 class function TDBConstants.Mongo_Admin_Pwd: String;
 begin
-  Result := 'Mong0_For9p';
+  Result := 'n45fg98sd#@!';
 end;
 
 class function TDBConstants.MySQLDriver(fullPath : Boolean): String;

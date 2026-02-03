@@ -13,7 +13,8 @@ uses
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Phys.FBDef,
   FireDAC.Phys.IBBase, FireDAC.Phys.FB, FireDAC.Comp.DataSet, System.JSON.BSON,
   Generics.Collections, System.IOUtils, System.IniFiles, System.Zip,
-  FireDAC.Phys.MongoDBWrapper, FireDAC.Phys.MongoDBDataSet;
+  FireDAC.Phys.MongoDBWrapper, FireDAC.Phys.MongoDBDataSet, System.Rtti,
+  System.JSON.Types, System.JSON.Readers, System.JSON.Builders;
 
 type
   {$M+}
@@ -47,8 +48,13 @@ type
     { Private declarations }
     FMongoConn : TMongoConnection;
     EnvLoader : TEnviLoader;
+    FMainPGConnDef: string;
+    FMainMongoConnDef: string;
   public
     { Public declarations }
+  published
+    property MainPGConnDef: string read FMainPGConnDef write FMainPGConnDef;
+    property MainMongoConnDef: string read FMainMongoConnDef write FMainMongoConnDef;
 
   end;
 
@@ -151,15 +157,23 @@ begin
   fupManager.Active := False;
   fupManager.ConnectionDefFileName := EnvLoader.ManagerFile;
   fupManager.LoadConnectionDefFile;
+  fupManager.Active := True;
 
-  PGConnection.Close;
+  MainPGConnDef := 'FUP_ENTITY';
+  FMainMongoConnDef := 'FUP_LOG';
+
+  {PGConnection.Close;
   PGConnection.ConnectionDefName := 'FUP_ENTITY';
   PGConnection.Open;
 
   MongoConnection.Close;
   MongoConnection.ConnectionDefName := 'FUP_LOG';
-  PGConnection.Open;
+  MongoConnection.Open;
   FMongoConn := TMongoConnection(MongoConnection.CliObj);
+
+  MongoCollections.Close;
+  MongoCollections.Cursor := FMongoConn.ListDatabases;
+  MongoConnection.Open;}
 end;
 
 procedure TEnviLoader.LoadDrivers(aModule : TDataModule);
@@ -210,14 +224,13 @@ begin
         zipHandle.ExtractAll(
           TPath.Combine([
               TDirectory.GetCurrentDirectory,
-              TDBConstants.PGDriver(false)
+              TDBConstants.PGDriver
             ])
         );
       end;
 
     if aLoadMongo then
       begin
-        zipHandle.Free;
         mongoDrvRes := TResourceStream.Create(HInstance, 'MONGODRVW64', RT_RCDATA);
         zipHandle := TZipFile.Create;
         zipHandle.Open(mongoDrvRes, zmRead);
@@ -225,10 +238,14 @@ begin
         zipHandle.ExtractAll(
           TPath.Combine([
             TDirectory.GetCurrentDirectory,
-            TDBConstants.MongoDriver(false)
+            TDBConstants.MongoDriver
           ])
         );
       end;
+
+    FreeAndNil(pgDrvRes);
+    FreeAndNil(mongoDrvRes);
+
   {$ENDIF}
 end;
 
