@@ -43,8 +43,7 @@ object main_connection: Tmain_connection
   object MongoConnection: TFDConnection
     Params.Strings = (
       'UseSSL=False'
-      'Pooled=False'
-      'UseSRV=False')
+      'Pooled=False')
     LoginPrompt = False
     Left = 488
     Top = 144

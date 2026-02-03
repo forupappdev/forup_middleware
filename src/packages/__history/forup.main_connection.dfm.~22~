@@ -35,9 +35,23 @@ object main_connection: Tmain_connection
     Left = 384
     Top = 320
   end
-  object FDConnection1: TFDConnection
+  object PGConnection: TFDConnection
     LoginPrompt = False
-    Left = 504
-    Top = 112
+    Left = 488
+    Top = 80
+  end
+  object MongoConnection: TFDConnection
+    Params.Strings = (
+      'UseSSL=False'
+      'Pooled=False'
+      'UseSRV=True')
+    LoginPrompt = False
+    Left = 488
+    Top = 144
+  end
+  object MongoCollections: TFDMongoDataSet
+    Connection = MongoConnection
+    Left = 488
+    Top = 208
   end
 end

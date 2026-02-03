@@ -41,17 +41,7 @@ object main_connection: Tmain_connection
     Top = 80
   end
   object MongoConnection: TFDConnection
-    Params.Strings = (
-      'UseSSL=False'
-      'Pooled=False'
-      'UseSRV=False')
-    LoginPrompt = False
     Left = 488
     Top = 144
-  end
-  object MongoCollections: TFDMongoDataSet
-    Connection = MongoConnection
-    Left = 488
-    Top = 208
   end
 end

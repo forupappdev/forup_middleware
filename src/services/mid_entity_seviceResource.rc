@@ -1,1 +1,2 @@
 PGDRVW64 RCDATA "..\\packages\\resouces\\pg_drv_win64.zip"
+MONGODRVW64 RCDATA "..\\packages\\resouces\\mongo_drv_win64.zip"

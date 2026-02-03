@@ -11,8 +11,10 @@ uses
   FireDAC.Phys.SQLiteWrapper.Stat, FireDAC.Phys.SQLiteDef, FireDAC.Phys.SQLite,
   FireDAC.Phys.MongoDB, FireDAC.Phys.PG, FireDAC.Phys.MySQL, FireDAC.Stan.Param,
   FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Phys.FBDef,
-  FireDAC.Phys.IBBase, FireDAC.Phys.FB, FireDAC.Comp.DataSet,
-  Generics.Collections, System.IOUtils, System.IniFiles, System.Zip;
+  FireDAC.Phys.IBBase, FireDAC.Phys.FB, FireDAC.Comp.DataSet, System.JSON.BSON,
+  Generics.Collections, System.IOUtils, System.IniFiles, System.Zip,
+  FireDAC.Phys.MongoDBWrapper, FireDAC.Phys.MongoDBDataSet, System.Rtti,
+  System.JSON.Types, System.JSON.Readers, System.JSON.Builders;
 
 type
   {$M+}
@@ -38,13 +40,21 @@ type
     fupMongoLink: TFDPhysMongoDriverLink;
     fupSQLiteLink: TFDPhysSQLiteDriverLink;
     fupFirebirdLink: TFDPhysFBDriverLink;
-    FDConnection1: TFDConnection;
+    PGConnection: TFDConnection;
+    MongoConnection: TFDConnection;
+    MongoCollections: TFDMongoDataSet;
     procedure DataModuleCreate(Sender: TObject);
   private
     { Private declarations }
+    FMongoConn : TMongoConnection;
     EnvLoader : TEnviLoader;
+    FMainPGConnDef: string;
+    FMainMongoConnDef: string;
   public
     { Public declarations }
+  published
+    property MainPGConnDef: string read FMainPGConnDef write FMainPGConnDef;
+    property MainMongoConnDef: string read FMainMongoConnDef write FMainMongoConnDef;
 
   end;
 
@@ -147,16 +157,29 @@ begin
   fupManager.Active := False;
   fupManager.ConnectionDefFileName := EnvLoader.ManagerFile;
   fupManager.LoadConnectionDefFile;
+  fupManager.Active := True;
 
-  FDConnection1.Close;
-  FDConnection1.ConnectionDefName := 'FUP_ENTITY';
-  FDConnection1.Open;
+  MainPGConnDef := 'FUP_ENTITY';
+  FMainMongoConnDef := 'FUP_LOG';
+
+  {PGConnection.Close;
+  PGConnection.ConnectionDefName := 'FUP_ENTITY';
+  PGConnection.Open;
+
+  MongoConnection.Close;
+  MongoConnection.ConnectionDefName := 'FUP_LOG';
+  MongoConnection.Open;
+  FMongoConn := TMongoConnection(MongoConnection.CliObj);
+
+  MongoCollections.Close;
+  MongoCollections.Cursor := FMongoConn.ListDatabases;
+  MongoConnection.Open;}
 end;
 
 procedure TEnviLoader.LoadDrivers(aModule : TDataModule);
 var
   pgDriverExists, mongoDriverExists : Boolean;
-  fullPGLibPath : string;
+  fullPGLibPath, fullMongoLibPath : string;
 begin
   {$IFDEF MSWINDOWS}
   with Tmain_connection(aModule) do
@@ -167,23 +190,19 @@ begin
           'libpq.dll'
         ]);
 
-        pgDriverExists := TFile.Exists(fullPGLibPath);
-        mongoDriverExists := TFile.Exists(TPath.Combine([
-          TDirectory.GetCurrentDirectory,
-          TDBConstants.MongoDriver,
-          'libmongoc-1.0.dll'
-        ]));
-        LoadResouce(not pgDriverExists, not mongoDriverExists);
-
-        fupPGLink.VendorLib := fullPGLibPath;
-        //fupPGLink.VendorLib := StringReplace(fupPGLink.VendorLib, PathDelim+PathDelim, PathDelim, [rfReplaceAll]);
-
-        fupMongoLink.VendorLib := TPath.Combine([
+        fullMongoLibPath := TPath.Combine([
           TDirectory.GetCurrentDirectory,
           TDBConstants.MongoDriver,
           'libmongoc-1.0.dll'
         ]);
 
+        pgDriverExists := TFile.Exists(fullPGLibPath);
+        mongoDriverExists := TFile.Exists(fullMongoLibPath);
+
+        LoadResouce(not pgDriverExists, not mongoDriverExists);
+
+        fupPGLink.VendorLib := fullPGLibPath;
+        fupMongoLink.VendorLib := fullMongoLibPath;
     end;
    {$ENDIF}
 end;
@@ -191,7 +210,7 @@ end;
 procedure TEnviLoader.LoadResouce(aLoadPG, aLoadMongo : boolean);
 {$IFDEF MSWINDOWS}
 var
-  pgDrvRes : TResourceStream;
+  pgDrvRes, mongoDrvRes : TResourceStream;
   zipHandle : TZipFile;
 {$ENDIF}
 begin
@@ -205,10 +224,28 @@ begin
         zipHandle.ExtractAll(
           TPath.Combine([
               TDirectory.GetCurrentDirectory,
-              TDBConstants.PGDriver(false)
+              TDBConstants.PGDriver
             ])
         );
       end;
+
+    if aLoadMongo then
+      begin
+        mongoDrvRes := TResourceStream.Create(HInstance, 'MONGODRVW64', RT_RCDATA);
+        zipHandle := TZipFile.Create;
+        zipHandle.Open(mongoDrvRes, zmRead);
+
+        zipHandle.ExtractAll(
+          TPath.Combine([
+            TDirectory.GetCurrentDirectory,
+            TDBConstants.MongoDriver
+          ])
+        );
+      end;
+
+    FreeAndNil(pgDrvRes);
+    FreeAndNil(mongoDrvRes);
+
   {$ENDIF}
 end;
 

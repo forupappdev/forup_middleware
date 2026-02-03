@@ -44,7 +44,7 @@ object main_connection: Tmain_connection
     Params.Strings = (
       'UseSSL=False'
       'Pooled=False'
-      'UseSRV=False')
+      'DriverID=Mongo')
     LoginPrompt = False
     Left = 488
     Top = 144

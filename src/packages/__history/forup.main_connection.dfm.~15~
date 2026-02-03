@@ -35,4 +35,18 @@ object main_connection: Tmain_connection
     Left = 384
     Top = 320
   end
+  object PGConnection: TFDConnection
+    LoginPrompt = False
+    Left = 488
+    Top = 80
+  end
+  object MongoConnection: TFDConnection
+    Left = 488
+    Top = 144
+  end
+  object MongoCollections: TFDMongoDataSet
+    Connection = MongoConnection
+    Left = 488
+    Top = 208
+  end
 end

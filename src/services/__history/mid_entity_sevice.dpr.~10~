@@ -4,15 +4,18 @@ program mid_entity_sevice;
 
 {$R *.res}
 
+{$R *.dres}
+
 uses
   System.SysUtils,
   forup.log_unit in '..\packages\forup.log_unit.pas',
   forup.main_connection in '..\packages\forup.main_connection.pas' {main_connection: TDataModule},
-  forup.constants in '..\packages\forup.constants.pas';
+  forup.constants in '..\packages\forup.constants.pas',
+  forup.helpers in '..\packages\forup.helpers.pas';
 
 begin
   try
-    { TODO -oUser -cConsole Main : Insert code here }
+    main_connection := Tmain_connection.Create(nil);
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);

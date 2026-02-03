@@ -42,9 +42,9 @@ object main_connection: Tmain_connection
   end
   object MongoConnection: TFDConnection
     Params.Strings = (
+      'DriverID=Mongo'
       'UseSSL=False'
-      'Pooled=False'
-      'UseSRV=False')
+      'Pooled=True')
     LoginPrompt = False
     Left = 488
     Top = 144

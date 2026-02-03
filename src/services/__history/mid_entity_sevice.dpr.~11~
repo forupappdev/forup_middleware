@@ -16,7 +16,6 @@ uses
 begin
   try
     main_connection := Tmain_connection.Create(nil);
-
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);
