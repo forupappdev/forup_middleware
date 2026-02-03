@@ -1,0 +1,15 @@
+unit forup.assync.data;
+
+interface
+uses forup.assync.datainf, System.Classes, System.StrUtils, System.SysUtils,
+System.Threading, System.Math, System.JSON, System.JSON.BSON, System.Generics.Collections,
+forup.main_connection;
+
+type
+  TDBThread = class(TThread)
+
+  end;
+
+implementation
+
+end.

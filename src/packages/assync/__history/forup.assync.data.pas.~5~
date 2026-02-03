@@ -1,0 +1,20 @@
+unit forup.assync.data;
+
+interface
+uses forup.assync.datainf, System.Classes, System.StrUtils, System.SysUtils,
+System.Threading, System.Math, System.JSON, System.JSON.BSON, System.Generics.Collections,
+forup.main_connection;
+
+type
+  TDBThread = class(TThread)
+  private
+    FConnDefName: string;
+    FSQL: TStringList;
+    published
+      property ConnDefName: string read FConnDefName write FConnDefName;
+      property SQL: TStringList read FSQL write FSQL;
+  end;
+
+implementation
+
+end.

@@ -4,6 +4,8 @@ program mid_entity_sevice;
 
 {$R *.res}
 
+{$R *.dres}
+
 uses
   System.SysUtils,
   forup.log_unit in '..\packages\forup.log_unit.pas',
@@ -14,6 +16,7 @@ uses
 begin
   try
     main_connection := Tmain_connection.Create(nil);
+
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);

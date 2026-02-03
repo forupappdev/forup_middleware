@@ -9,7 +9,6 @@ const
   MONGO_KEY = 'MONGODB';
 
 type
-  TDBType = (tdbPG, tdbMongo);
   TDBConstants = class
     public
       class function PGDriver(fullPath : Boolean = true) : String;
