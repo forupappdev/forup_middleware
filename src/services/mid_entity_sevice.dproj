@@ -232,8 +232,6 @@
         </DCCReference>
         <DCCReference Include="..\packages\forup.constants.pas"/>
         <DCCReference Include="..\packages\forup.helpers.pas"/>
-        <DCCReference Include="..\packages\assync\forup.assync.datainf.pas"/>
-        <DCCReference Include="..\packages\assync\forup.assync.data.pas"/>
         <RcItem Include="..\packages\resouces\pg_drv_win64.zip">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

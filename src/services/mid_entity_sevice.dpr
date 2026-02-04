@@ -11,9 +11,7 @@ uses
   forup.log_unit in '..\packages\forup.log_unit.pas',
   forup.main_connection in '..\packages\forup.main_connection.pas' {main_connection: TDataModule},
   forup.constants in '..\packages\forup.constants.pas',
-  forup.helpers in '..\packages\forup.helpers.pas',
-  forup.assync.datainf in '..\packages\assync\forup.assync.datainf.pas',
-  forup.assync.data in '..\packages\assync\forup.assync.data.pas';
+  forup.helpers in '..\packages\forup.helpers.pas';
 
 begin
   try
