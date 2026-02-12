@@ -1,0 +1,120 @@
+unit forup.data.intf;
+
+interface
+uses System.Classes, System.SysUtils, Data.DB, System.JSON, System.JSON.Types, System.JSON.Builders,
+System.JSON.Readers, System.JSON.Writers, System.StrUtils;
+
+type
+  IDataAcces = interface(IInterface)
+    ['{417FE35E-9ED5-47BF-98D6-83516A46B793}']
+
+    function InsertObject(aObj : TJSONValue) : TJSONValue;
+    function UpdateObject(aObj : TJSONValue) : TJSONValue;
+    function GetObject(aID : string) : TJSONValue;
+    function GetObjects(aFilter : TJSONValue) : TJSONValue;
+    function DeleteObject(aID : string) : TJSONValue;
+    function DeleteObjects(aFilter : TJSONValue) : TJSONValue;
+  end;
+
+  TFUPDataAcces = class(TInterfacedObject,  IDataAcces)
+    public
+      function SuccessResult(aMessage : string; aObj : TJSONValue) : TJSONValue;
+      function ErrorResult(aMessage : string; aObj : TJSONValue) : TJSONValue;
+
+      function InsertObject(aObj : TJSONValue) : TJSONValue; virtual;
+      function UpdateObject(aObj : TJSONValue) : TJSONValue; virtual;
+      function GetObject(aID : string) : TJSONValue; virtual;
+      function GetObjects(aFilter : TJSONValue) : TJSONValue; virtual;
+      function DeleteObject(aID : string) : TJSONValue; virtual;
+      function DeleteObjects(aFilter : TJSONValue) : TJSONValue; virtual;
+  end;
+
+implementation
+
+{ TFUPDataAcces }
+
+uses forup.log_unit;
+
+function TFUPDataAcces.DeleteObject(aID: string): TJSONValue;
+begin
+
+end;
+
+function TFUPDataAcces.DeleteObjects(aFilter: TJSONValue): TJSONValue;
+begin
+
+end;
+
+function TFUPDataAcces.ErrorResult(aMessage : string; aObj: TJSONValue): TJSONValue;
+var
+  strWriter: TStringWriter;
+  jsonWriter: TJsonTextWriter;
+begin
+  strWriter := TStringWriter.Create;
+  jsonWriter := TJsonTextWriter.Create(strWriter);
+  try
+    jsonWriter.Formatting := TJsonFormatting.Indented;
+
+    jsonWriter.WriteStartObject;
+    jsonWriter.WritePropertyName('result');
+    jsonWriter.WriteValue('error');
+    jsonWriter.WritePropertyName('message');
+    jsonWriter.WriteValue(aMessage);
+    jsonWriter.WritePropertyName('data_result');
+    jsonWriter.WriteRaw(aObj.ToJSON());
+    jsonWriter.WriteEndObject;
+  except
+    on e : exception do
+      begin
+        TLogger.GetInstance().Log(llFailure, 'build_error_result', aMessage, nil, nil, e)
+      end;
+  end;
+end;
+
+function TFUPDataAcces.GetObject(aID: string): TJSONValue;
+begin
+
+end;
+
+function TFUPDataAcces.GetObjects(aFilter: TJSONValue): TJSONValue;
+begin
+
+end;
+
+function TFUPDataAcces.InsertObject(aObj: TJSONValue): TJSONValue;
+begin
+
+end;
+
+function TFUPDataAcces.SuccessResult(aMessage : string; aObj: TJSONValue): TJSONValue;
+var
+  strWriter: TStringWriter;
+  jsonWriter: TJsonTextWriter;
+begin
+  strWriter := TStringWriter.Create;
+  jsonWriter := TJsonTextWriter.Create(strWriter);
+  try
+    jsonWriter.Formatting := TJsonFormatting.Indented;
+
+    jsonWriter.WriteStartObject;
+    jsonWriter.WritePropertyName('result');
+    jsonWriter.WriteValue('success');
+    jsonWriter.WritePropertyName('message');
+    jsonWriter.WriteValue(aMessage);
+    jsonWriter.WritePropertyName('data_result');
+    jsonWriter.WriteRaw(aObj.ToJSON());
+    jsonWriter.WriteEndObject;
+  except
+    on e : exception do
+      begin
+        TLogger.GetInstance().Log(llFailure, 'build_success_result', aMessage, nil, nil, e)
+      end;
+  end;
+end;
+
+function TFUPDataAcces.UpdateObject(aObj: TJSONValue): TJSONValue;
+begin
+
+end;
+
+end.

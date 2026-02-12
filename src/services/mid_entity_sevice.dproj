@@ -232,6 +232,9 @@
         </DCCReference>
         <DCCReference Include="..\packages\forup.constants.pas"/>
         <DCCReference Include="..\packages\forup.helpers.pas"/>
+        <DCCReference Include="..\packages\forup.data.intf.pas"/>
+        <DCCReference Include="..\packages\forup.data.pgsql.pas"/>
+        <DCCReference Include="..\packages\forup.data.mongodb.pas"/>
         <RcItem Include="..\packages\resouces\pg_drv_win64.zip">
             <ContainerId>ResourceItem</ContainerId>
             <ResourceType>RCDATA</ResourceType>

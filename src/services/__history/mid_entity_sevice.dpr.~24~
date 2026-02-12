@@ -1,0 +1,25 @@
+program mid_entity_sevice;
+
+{$APPTYPE CONSOLE}
+
+{$R *.res}
+
+{$R *.dres}
+
+uses
+  System.SysUtils,
+  forup.log_unit in '..\packages\forup.log_unit.pas',
+  forup.main_connection in '..\packages\forup.main_connection.pas' {main_connection: TDataModule},
+  forup.constants in '..\packages\forup.constants.pas',
+  forup.helpers in '..\packages\forup.helpers.pas',
+  forup.data.intf in '..\packages\forup.data.intf.pas',
+  forup.data.pgsql in '..\packages\forup.data.pgsql.pas';
+
+begin
+  try
+    main_connection := Tmain_connection.Create(nil);
+  except
+    on E: Exception do
+      Writeln(E.ClassName, ': ', E.Message);
+  end;
+end.

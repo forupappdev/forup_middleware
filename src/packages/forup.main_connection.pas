@@ -4,7 +4,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Types, FireDAC.Stan.Intf, FireDAC.Stan.Option,
-  FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+  FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def, System.StrUtils,
   FireDAC.Phys, FireDAC.ConsoleUI.Wait, FireDAC.Stan.Pool, FireDAC.Stan.Async,
   Data.DB, FireDAC.Comp.Client, FireDAC.Comp.UI, FireDAC.Phys.MySQLDef,
   FireDAC.Phys.PGDef, FireDAC.Phys.MongoDBDef, FireDAC.Stan.ExprFuncs,
@@ -14,7 +14,7 @@ uses
   FireDAC.Phys.IBBase, FireDAC.Phys.FB, FireDAC.Comp.DataSet, System.JSON.BSON,
   Generics.Collections, System.IOUtils, System.IniFiles, System.Zip,
   FireDAC.Phys.MongoDBWrapper, FireDAC.Phys.MongoDBDataSet, System.Rtti,
-  System.JSON.Types, System.JSON.Readers, System.JSON.Builders;
+  System.JSON.Types, System.JSON.Readers, System.JSON.Builders, forup.log_unit;
 
 type
   {$M+}
@@ -52,6 +52,7 @@ type
     FMainMongoConnDef: string;
   public
     { Public declarations }
+    function TryPGConnect(aDef : string = '') : Boolean;
   published
     property MainPGConnDef: string read FMainPGConnDef write FMainPGConnDef;
     property MainMongoConnDef: string read FMainMongoConnDef write FMainMongoConnDef;
@@ -249,6 +250,27 @@ begin
     FreeAndNil(mongoDrvRes);
 
   {$ENDIF}
+end;
+
+function Tmain_connection.TryPGConnect(aDef: string): Boolean;
+begin
+  if not PGConnection.Connected then
+    begin
+      try
+        PGConnection.Close;
+        PGConnection.ConnectionDefName := IfThen(aDef.IsEmpty, MainPGConnDef, aDef);
+        PGConnection.Connected;
+
+        Result := PGConnection.Connected;
+      except
+        on e : exception do
+          begin
+            TLogger.GetInstance().Log(llFailure, 'pgsql_trying_connect', 'Connection Error', nil, nil, e);
+            Result := False;
+          end;
+      end;
+    end
+  else Result := PGConnection.Connected;
 end;
 
 end.

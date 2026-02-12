@@ -1,0 +1,253 @@
+unit forup.data.pgsql;
+
+interface
+uses forup.data.intf, System.Classes, System.StrUtils, System.SysUtils, System.JSON,
+System.JSON.Types, System.JSON.Writers, FireDAC.Comp.Client, DataSet.Serialize,
+Data.DB;
+
+type
+  TFUPPGData = class(TFUPDataAcces, IDataAcces)
+    public
+      function InsertObject(aObj : TJSONValue) : TJSONValue; override;
+      function UpdateObject(aObj : TJSONValue) : TJSONValue; override;
+      function GetObject(aID : string; aFrom : string) : TJSONValue; override;
+      function GetObjects(aFilter : TJSONValue) : TJSONValue; override;
+      function DeleteObject(aID : string; aFrom : string) : TJSONValue; override;
+      function DeleteObjects(aFilter : TJSONValue) : TJSONValue; override;
+  end;
+
+implementation
+uses forup.main_connection, forup.log_unit, forup.helpers;
+{ TFUPPGData }
+
+function TFUPPGData.DeleteObject(aID: string; aFrom : string): TJSONValue;
+var
+  pgCMD : TFDCommand;
+begin
+  if main_connection.TryPGConnect() then
+    begin
+      pgCMD := TFDCommand.Create(nil);
+      pgCMD.Connection := main_connection.PGConnection;
+      with pgCMD do
+        begin
+          try
+            Result := SuccessResult(
+                pgCMD.RowsAffected.ToString+' row deleted',
+                TJSONObject.ParseJSONValue('{}') //Helper DataSet to JSON
+              );
+          except
+            on e : Exception do
+              begin
+
+              end;
+          end;
+        end;
+    end
+  else
+    begin
+      Result := ErrorResult('Database not connected!',nil);
+    end;
+end;
+
+function TFUPPGData.DeleteObjects(aFilter: TJSONValue): TJSONValue;
+var
+  pgCMD : TFDCommand;
+begin
+  if main_connection.TryPGConnect() then
+    begin
+      pgCMD := TFDCommand.Create(nil);
+      pgCMD.Connection := main_connection.PGConnection;
+      with pgCMD do
+        begin
+          try
+            Result := SuccessResult(
+                pgCMD.RowsAffected.ToString+' rows deleted',
+                TJSONObject.ParseJSONValue('{}') //Helper DataSet to JSON
+              );
+          except
+            on e : Exception do
+              begin
+
+              end;
+          end;
+        end;
+    end
+  else
+    begin
+      Result := ErrorResult('Database not connected!',nil);
+    end;
+end;
+
+function TFUPPGData.GetObject(aID: string; aFrom : string): TJSONValue;
+var
+  pgQry : TFDQuery;
+begin
+  try
+    pgQry := TFDQuery.Create(nil);
+    if main_connection.TryPGConnect() then
+      begin
+        pgQry.Connection := main_connection.PGConnection;
+        with pgQry do
+          begin
+            Close;
+            Sql.Clear;
+            Sql.Add('SELECT * FROM '+aFrom);
+            Sql.Add('WHERE _id = :ID');
+            Params.ParamByName('ID').Value := aID;
+            Prepare;
+
+            try
+              Open;
+              Result := SuccessResult(
+                RecordCount.ToString+' selected',
+                TDataSet(pgQry).ToJSONObject() //Helper DataSet to JSON
+              );
+              Close;
+            except
+              on e : Exception do
+                begin
+                  TLogger.GetInstance().Log(TLogLevel.llFailure, 'GetObject', 'ID = '+aID+';FROM = '+aFrom,
+                  nil, nil, e);
+                  Result := ErrorResult('Error Selecting ID ('+aID+') FROM ('+aFrom+')', nil);
+                end;
+            end;
+          end;
+      end
+    else
+      begin
+        Result := ErrorResult('Database not connected!',nil);
+      end;
+  finally
+    pgQry.Free;
+  end;
+end;
+
+function TFUPPGData.GetObjects(aFilter: TJSONValue): TJSONValue;
+var
+  pgQry : TFDQuery;
+  LFields : String;
+  LFrom : String;
+begin
+  try
+    pgQry := TFDQuery.Create(nil);
+    if main_connection.TryPGConnect() then
+      begin
+        pgQry.Connection := main_connection.PGConnection;
+        with pgQry do
+          begin
+            Close;
+            Sql.Clear;
+            try
+              LFields := '*';
+              if aFilter.TryGetValue<String>('fields',LFields) then
+                begin
+                  if LFields.IsEmpty then
+                    LFields := '*';
+                end;
+
+              LFrom := EmptyStr;
+              if not aFilter.TryGetValue<String>('from',LFrom) then
+                begin
+                  raise Exception.Create('Not found [from] property at filter.');
+                end
+              else if LFrom.IsEmpty then
+                begin
+                  raise Exception.Create('Property [from] empty at filter.');
+                end;
+
+              Sql.Add('SELECT '+LFields+' FROM '+LFrom);
+
+              if aFilter.BuildSQLClause(pgQry) then
+                begin
+                  Prepare;
+                end
+              else
+                begin
+                  raise Exception.Create('Criteria not builted.');
+                end;
+
+              Open;
+              Result := SuccessResult(
+                RecordCount.ToString+' selected',
+                TDataSet(pgQry).ToJSONObject() //Helper DataSet to JSON
+              );
+              Close;
+            except
+              on e : Exception do
+                begin
+                  TLogger.GetInstance().Log(TLogLevel.llFailure, 'GetObjects', 'Can''t build select statement',
+                  TJSONObject(aFilter), nil, e);
+                  Result := ErrorResult('Error building select statement', nil);
+                end;
+            end;
+          end;
+      end
+    else
+      begin
+        Result := ErrorResult('Database not connected!',nil);
+      end;
+  finally
+    pgQry.Free;
+  end;
+end;
+
+function TFUPPGData.InsertObject(aObj: TJSONValue): TJSONValue;
+var
+  pgCMD : TFDCommand;
+begin
+    if main_connection.TryPGConnect() then
+    begin
+      pgCMD := TFDCommand.Create(nil);
+      pgCMD.Connection := main_connection.PGConnection;
+      with pgCMD do
+        begin
+          try
+            Result := SuccessResult(
+                pgCMD.RowsAffected.ToString+' row inserted',
+                TJSONObject.ParseJSONValue('{}') //Helper DataSet to JSON
+              );
+          except
+            on e : Exception do
+              begin
+
+              end;
+          end;
+        end;
+    end
+  else
+    begin
+      Result := ErrorResult('Database not connected!',nil);
+    end;
+end;
+
+function TFUPPGData.UpdateObject(aObj: TJSONValue): TJSONValue;
+var
+  pgCMD : TFDCommand;
+begin
+    if main_connection.TryPGConnect() then
+    begin
+      pgCMD := TFDCommand.Create(nil);
+      pgCMD.Connection := main_connection.PGConnection;
+      with pgCMD do
+        begin
+          try
+            Result := SuccessResult(
+                IfThen(pgCMD.RowsAffected > 1, pgCMD.RowsAffected.ToString+' rows updated',
+                  '1 row updated'),
+                TJSONObject.ParseJSONValue('{}') //Helper DataSet to JSON
+              );
+          except
+            on e : Exception do
+              begin
+
+              end;
+          end;
+        end;
+    end
+  else
+    begin
+      Result := ErrorResult('Database not connected!',nil);
+    end;
+end;
+
+end.
