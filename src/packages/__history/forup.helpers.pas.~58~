@@ -111,7 +111,7 @@ begin
               begin
                 aExtValue := aValue.GetValue<Extended>;
                 AMongoDocument.Add(aPair.JsonString.Value,
-                  FormatDateTime('yyyy-mm-dd HH:mm:ss', FloatToDateTime(aExtValue)));
+                  FormatDateTime('yyyy-mm-dd hh:mm:ss', FloatToDateTime(aExtValue)));
               end
             else
               begin

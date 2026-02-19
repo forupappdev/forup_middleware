@@ -19,20 +19,11 @@ uses
 begin
   try
     main_connection := Tmain_connection.Create(nil);
-
-    TLogger.GetInstance().Log(
-          TLogLevel.llSuccess, 'service_initialized', 'Datamodule Created', nil, nil, nil
-        );
-
-    main_connection.PGConnection.Close;
-    main_connection.MongoConnection.Close;
-    main_connection.fupManager.Active := false;
-
   except
     on E: Exception do
       begin
         TLogger.GetInstance().Log(
-          TLogLevel.llFailure, 'service_initialization', 'Trying to initiate service', nil, nil, E
+          TLogLevel.llFailure, 'Initiating Service', 'Trying to initiate service', nil, nil, E
         );
       end;
   end;

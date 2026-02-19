@@ -44,7 +44,7 @@ const
 begin
   Result := TJSONObject.Create;
   try
-    Result.AddPair('timestamp', FormatDateTime('yyyy-mm-dd HH:mm:ss', Now));
+    Result.AddPair('timestamp', DateTimeToJulianDate(Now));
     Result.AddPair('level', LevelNames[ALevel]);
     Result.AddPair('service', FServiceName);
     Result.AddPair('action', AAction);
@@ -122,7 +122,7 @@ begin
           end;
       end;
   finally
-    LLogEntry := nil;
+    LLogEntry.Free;
   end;
 end;
 
@@ -141,7 +141,7 @@ begin
   aDataAccess.Collection := 'mid_service';
   aInsertedDoc := aDataAccess.InsertObject(TJSONValue(ALogEntry));
   Result := Assigned(aInsertedDoc);
-  aInsertedDoc := nil// Simulando falha para demonstrar o fallback para disco
+  aInsertedDoc.Free;// Simulando falha para demonstrar o fallback para disco
 end;
 
 procedure TLogger.WriteToDisk(const ALogEntry: TJSONObject);

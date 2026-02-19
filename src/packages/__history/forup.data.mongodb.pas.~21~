@@ -57,9 +57,8 @@ function TFUPMongoData.InsertObject(aObj: TJSONValue): TJSONValue;
 var
   _Env : TMongoEnv;
   _Doc : TMongoDocument;
-  _LastID: string;
+  _LastID : string;
   aGUID : TGUID;
-  oCurs : IMongoCursor;
 begin
   if main_connection.TryMongoConnect(_Env) then
     begin
@@ -69,14 +68,7 @@ begin
             _LastID := TFUPFuncHelper.AlphaNumeric(GUIDToString(aGUID));
 
           _Doc := aObj.GetMongoDocument(_Env);
-          _Doc.Add('tracker', _LastID);
           main_connection.FMongoConn[DataBase][Collection].Insert(_Doc);
-
-          oCurs := main_connection.FMongoConn[DataBase][Collection].Find()
-            .Match('{"tracker":"'+_LastID+'"}').&End;
-
-          while oCurs.Next do
-            Result := TJSONObject.ParseJSONValue(oCurs.Doc.AsJSON);
         except
           on e : exception do
             begin
@@ -85,14 +77,14 @@ begin
                   TLogLevel.llFailure,
                   'mongo_insert_document',
                   'Trying to Insert doc into Collection: '+Self.FCollection,
-                  TJSONObject(aObj), nil, e, true
+                  TJSONObject(aObj), nil, e
                 )
               else if aObj is TJSONArray then
                 TLogger.GetInstance().Log(
                   TLogLevel.llFailure,
                   'mongo_insert_array',
                   'Trying to Insert doc into Collection: '+Self.FCollection,
-                  TJsonObject(TJSONObject.ParseJSONValue('{"obj_error":'+aObj.ToJSON+'}')), nil, e, true
+                  TJsonObject(TJSONObject.ParseJSONValue('{"obj_error":'+aObj.ToJSON+'}')), nil, e
                 );
             end;
         end;

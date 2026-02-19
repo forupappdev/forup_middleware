@@ -46,13 +46,12 @@ type
     procedure DataModuleCreate(Sender: TObject);
   private
     { Private declarations }
+    FMongoConn : TMongoConnection;
     EnvLoader : TEnviLoader;
     FMainPGConnDef: string;
     FMainMongoConnDef: string;
   public
     { Public declarations }
-    FMongoConn : TMongoConnection;
-
     function TryPGConnect(aDef : string = '') : Boolean;
     function TryMongoConnect(var aEnv : TMongoEnv) : Boolean;
   published

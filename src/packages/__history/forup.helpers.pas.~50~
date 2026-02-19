@@ -6,7 +6,7 @@ system.JSON.Readers, System.JSON, System.Classes, System.StrUtils, System.Masks,
 system.Math, System.IOUtils, System.SysUtils, Generics.Collections, System.Rtti,
 System.Types, System.TypInfo, Data.DB, System.json.Writers, Horse.Jhonson,
 FireDAC.Comp.Client, FireDAC.Phys.MongoDBWrapper, FireDAC.Phys.MongoDBDef,
-FireDAC.Phys.MongoDB, System.Variants, System.DateUtils;
+FireDAC.Phys.MongoDB, System.Variants;
 
 type
   TCharCase = (tccNone, tccUpper, tccLower);
@@ -107,17 +107,8 @@ begin
           AMongoDocument.Add(aPair.JsonString.Value, aValue.Value)
         else if aValue is TJSONNumber then
           begin
-            if aPair.JsonString.Value.Contains('timestamp') then
-              begin
-                aExtValue := aValue.GetValue<Extended>;
-                AMongoDocument.Add(aPair.JsonString.Value,
-                  FormatDateTime('yyyy-mm-dd HH:mm:ss', FloatToDateTime(aExtValue)));
-              end
-            else
-              begin
-                aExtValue := aValue.GetValue<Extended>;
-                AMongoDocument.Add(aPair.JsonString.Value, aExtValue);
-              end;
+            aExtValue := aValue.GetValue<Extended>;
+            AMongoDocument.Add(aPair.JsonString.Value, aExtValue);
           end
         else if aValue is TJSONObject then
           begin
@@ -142,6 +133,8 @@ begin
             AMongoDocument.Add(aPair.JsonString.Value,
               'Unknown JsonType for property. Value found -> '+aValue.Value);
           end;
+
+        aNestedDoc.Free;
       except
         on e : exception do
           begin
@@ -152,6 +145,7 @@ begin
     end;
 
   aValue.Free;
+  aPair.Free;
 end;
 
 function TJSONHelper.DictionaryToJSON(

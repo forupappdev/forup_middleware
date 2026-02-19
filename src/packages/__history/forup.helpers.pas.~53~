@@ -98,6 +98,7 @@ var
   aValue : TJSONValue;
   aNestedDoc : TMongoDocument;
   aExtValue : Extended;
+  aJsonTime : TJsonTimestamp;
 begin
   for aPair in AJsonObject do
     begin
@@ -110,8 +111,8 @@ begin
             if aPair.JsonString.Value.Contains('timestamp') then
               begin
                 aExtValue := aValue.GetValue<Extended>;
-                AMongoDocument.Add(aPair.JsonString.Value,
-                  FormatDateTime('yyyy-mm-dd HH:mm:ss', FloatToDateTime(aExtValue)));
+                aJsonTime.AsDateTime := TDateTimeField(
+                AMongoDocument.Add()(aPair.JsonString.Value, )
               end
             else
               begin
@@ -142,6 +143,9 @@ begin
             AMongoDocument.Add(aPair.JsonString.Value,
               'Unknown JsonType for property. Value found -> '+aValue.Value);
           end;
+
+        if Assigned(aNestedDoc) then
+          aNestedDoc.Free;
       except
         on e : exception do
           begin
@@ -152,6 +156,7 @@ begin
     end;
 
   aValue.Free;
+  aPair.Free;
 end;
 
 function TJSONHelper.DictionaryToJSON(

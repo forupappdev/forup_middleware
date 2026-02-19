@@ -44,7 +44,7 @@ const
 begin
   Result := TJSONObject.Create;
   try
-    Result.AddPair('timestamp', FormatDateTime('yyyy-mm-dd HH:mm:ss', Now));
+    Result.AddPair('timestamp', DateTimeToJulianDate(Now));
     Result.AddPair('level', LevelNames[ALevel]);
     Result.AddPair('service', FServiceName);
     Result.AddPair('action', AAction);

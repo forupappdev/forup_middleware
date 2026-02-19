@@ -57,7 +57,7 @@ function TFUPMongoData.InsertObject(aObj: TJSONValue): TJSONValue;
 var
   _Env : TMongoEnv;
   _Doc : TMongoDocument;
-  _LastID: string;
+  _LastID, strDebug : string;
   aGUID : TGUID;
   oCurs : IMongoCursor;
 begin
@@ -70,13 +70,17 @@ begin
 
           _Doc := aObj.GetMongoDocument(_Env);
           _Doc.Add('tracker', _LastID);
+          strDebug := _Doc.AsJSON;
           main_connection.FMongoConn[DataBase][Collection].Insert(_Doc);
 
           oCurs := main_connection.FMongoConn[DataBase][Collection].Find()
             .Match('{"tracker":"'+_LastID+'"}').&End;
 
-          while oCurs.Next do
-            Result := TJSONObject.ParseJSONValue(oCurs.Doc.AsJSON);
+          if oCurs.IsAlive then
+            begin
+              while oCurs.Next do
+                Result := TJSONObject.ParseJSONValue(oCurs.Doc.AsJSON);
+            end;
         except
           on e : exception do
             begin

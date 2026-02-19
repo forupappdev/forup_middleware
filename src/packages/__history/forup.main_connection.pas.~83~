@@ -46,15 +46,13 @@ type
     procedure DataModuleCreate(Sender: TObject);
   private
     { Private declarations }
+    FMongoConn : TMongoConnection;
     EnvLoader : TEnviLoader;
     FMainPGConnDef: string;
     FMainMongoConnDef: string;
   public
     { Public declarations }
-    FMongoConn : TMongoConnection;
-
     function TryPGConnect(aDef : string = '') : Boolean;
-    function TryMongoConnect(var aEnv : TMongoEnv) : Boolean;
   published
     property MainPGConnDef: string read FMainPGConnDef write FMainPGConnDef;
     property MainMongoConnDef: string read FMainMongoConnDef write FMainMongoConnDef;
@@ -171,7 +169,10 @@ begin
   PGConnection.ConnectionDefName := 'FUP_ENTITY';
   PGConnection.Open;
 
-
+  MongoConnection.Close;
+  MongoConnection.ConnectionDefName := 'FUP_LOG';
+  MongoConnection.Open;
+  FMongoConn := TMongoConnection(MongoConnection.CliObj);
 
   MongoCollections.Close;
   MongoCollections.Cursor := FMongoConn.ListDatabases;
@@ -249,25 +250,6 @@ begin
     FreeAndNil(mongoDrvRes);
 
   {$ENDIF}
-end;
-
-function Tmain_connection.TryMongoConnect(var aEnv: TMongoEnv): Boolean;
-begin
-  try
-    Result := True;
-    MongoConnection.Close;
-    MongoConnection.ConnectionDefName := FMainMongoConnDef;
-    MongoConnection.Open;
-    FMongoConn := TMongoConnection(MongoConnection.CliObj);
-    aEnv := FMongoConn.Env;
-  except
-    on e : Exception do
-      begin
-        TLogger.GetInstance().Log(TLogLevel.llFailure, 'mongo_db_connect', 'Trying to connect Mongo DB: '+FMainMongoConnDef,
-        nil, nil, e);
-        Result := false;
-      end;
-  end;
 end;
 
 function Tmain_connection.TryPGConnect(aDef: string): Boolean;

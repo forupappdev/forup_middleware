@@ -33,7 +33,7 @@ type
   end;
 
 implementation
-uses forup.main_connection, forup.data.mongodb;
+uses forup.main_connection;
 { TLogger }
 
 function TLogger.BuildLogObject(ALevel: TLogLevel; const AAction,
@@ -44,7 +44,7 @@ const
 begin
   Result := TJSONObject.Create;
   try
-    Result.AddPair('timestamp', FormatDateTime('yyyy-mm-dd HH:mm:ss', Now));
+    Result.AddPair('timestamp', TTimeZone.Local.ToUniversalTime(Now));
     Result.AddPair('level', LevelNames[ALevel]);
     Result.AddPair('service', FServiceName);
     Result.AddPair('action', AAction);
@@ -122,26 +122,18 @@ begin
           end;
       end;
   finally
-    LLogEntry := nil;
+    LLogEntry.Free;
   end;
 end;
 
 function TLogger.TryWriteToMongoDB(const ALogEntry: TJSONObject): Boolean;
-var
-  aDataAccess  : TFUPMongoData;
-  aInsertedDoc : TJSONValue;
 begin
   {
     Implementação da conexão com MongoDB (ex: usando drivers como TMongoClient do FireDAC)
     Para este cenário, simulamos uma falha ou sucesso.
     Em um ambiente AWS, aqui seria usada a string de conexão segura via Secrets Manager.
   }
-  aDataAccess := TFUPMongoData.Create;
-  aDataAccess.DataBase := 'fup_log_database';
-  aDataAccess.Collection := 'mid_service';
-  aInsertedDoc := aDataAccess.InsertObject(TJSONValue(ALogEntry));
-  Result := Assigned(aInsertedDoc);
-  aInsertedDoc := nil// Simulando falha para demonstrar o fallback para disco
+  Result := False; // Simulando falha para demonstrar o fallback para disco
 end;
 
 procedure TLogger.WriteToDisk(const ALogEntry: TJSONObject);
