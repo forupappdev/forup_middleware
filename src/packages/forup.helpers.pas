@@ -6,13 +6,11 @@ system.JSON.Readers, System.JSON, System.Classes, System.StrUtils, System.Masks,
 system.Math, System.IOUtils, System.SysUtils, Generics.Collections, System.Rtti,
 System.Types, System.TypInfo, Data.DB, System.json.Writers, Horse.Jhonson,
 FireDAC.Comp.Client, FireDAC.Phys.MongoDBWrapper, FireDAC.Phys.MongoDBDef,
-FireDAC.Phys.MongoDB, System.Variants, System.DateUtils;
+FireDAC.Phys.MongoDB, System.Variants, System.DateUtils, FireDAC.Stan.Param;
 
 type
   TCharCase = (tccNone, tccUpper, tccLower);
   TFUPFuncHelper = class sealed
-    private
-      constructor Create;
     public
       class function AlphaNumeric(const S : String; aCase : TCharCase = tccLower) : String; static;
   end;
@@ -22,9 +20,12 @@ type
        // Funções de conversão internas e recursivas para objetos e arrays JSON
       procedure ConvertJsonObject(const AJsonObject: TJSONObject; AMongoDocument: TMongoDocument);
       procedure ConvertJsonArray(const AJsonObject: TJSONArray; AMongoDocument: TMongoDocument);
+
+      function ValidSQLValue(aValue : String) : Boolean;
     public
       function DictionaryToJSON(aDic : TDictionary<string, string>) : TJSONValue;
-      function BuildSQLClause(var aQry : TFDQuery) : Boolean;
+      function BuildSQLClause(var aQry : TFDQuery) : Boolean; overload;
+      function BuildSQLClause(var aCMD : TFDCommand) : Boolean; overload;
       function GetMongoDocument(aEnv : TMongoEnv) : TMongoDocument;
   end;
 implementation
@@ -37,12 +38,246 @@ uses forup.log_unit;
 
 function TJSONHelper.BuildSQLClause(var aQry: TFDQuery) : Boolean;
 var
+  iWhere : Integer;
   aCriteria : TJSONValue;
+  aWhere : TJSONArray;
+  aOrder : TJSONValue;
+  aGroup : TJSONValue;
+  aHaving : TJSONValue;
+  aLimiter : TJSONValue;
+  aOffset : TJSONValue;
+  aCond, aField, aParamName, aOperator, aNewCond, aSQLLine : String;
+  aValue : TJSONValue;
+  aOpenOperation, aClosOperation : Boolean;
 begin
   Result := True;
   if Self.TryGetValue<TJSONValue>('criteria', aCriteria) then
     begin
+      if aCriteria.TryGetValue<TJSONArray>('where', aWhere) then
+        begin
+          aCond := 'WHERE ';
+          for iWhere := 0 to aWhere.Count do
+            begin
+              aOpenOperation := false;
+              aClosOperation := false;
+              aWhere.Items[iWhere].TryGetValue<string>('field', aField);
+              aParamName := 'p'+aField.Replace('.','_',[rfReplaceAll]);
 
+              aWhere.Items[iWhere].TryGetValue<string>('operator', aOperator);
+              aWhere.Items[iWhere].TryGetValue<Boolean>('openBlock', aOpenOperation);
+              aWhere.Items[iWhere].TryGetValue<Boolean>('closeBlock', aClosOperation);
+
+              aValue := aWhere.Items[iWhere].GetValue<TJSONValue>('value');
+              aSQLLine := aCond + IfThen(aOpenOperation,'(',EmptyStr) + aField + ' ' + aOperator + aParamName
+                + IfThen(aClosOperation, ')', EmptyStr);
+
+              if ValidSQLValue(aSQLLine) then
+                aQry.SQL.Add(aSQLLine);
+
+              if aValue is TJSONNull then
+                begin
+                  aQry.Params.ParamByName(aParamName).Clear;
+                  aQry.Params.ParamByName(aParamName).DataType := ftUnknown;
+                end
+              else if aValue is TJSONNumber then
+                begin
+                  if Pos('.', aValue.Value) > 0 then
+                    aQry.Params.ParamByName(aParamName).Value := (aValue as TJSONNumber).AsDouble
+                  else
+                    aQry.Params.ParamByName(aParamName).Value := (aValue as TJSONNumber).AsInt64;
+                end
+              else if aValue is TJSONBool then
+                begin
+                  aQry.Params.ParamByName(aParamName).Value := (aValue as TJSONBool).AsBoolean;
+                end
+              else
+                begin
+                  aQry.Params.ParamByName(aParamName).Value := aValue.Value;
+                end;
+
+              aWhere.Items[iWhere].TryGetValue<string>('next_condition', aNewCond);
+              if aNewCond <> EmptyStr then
+                aCond := 'AND ';
+            end;
+
+          if aCriteria.TryGetValue<TJSONValue>('group', aGroup) then
+            begin
+              if not (aGroup is TJSONNull) then
+                begin
+                  aSQLLine := 'GROUP BY '+aGroup.Value;
+                  if ValidSQLValue(aSQLLine) then
+                    aQry.SQL.Add(aSQLLine);
+                end;
+            end;
+
+          if aCriteria.TryGetValue<TJSONValue>('order', aOrder) then
+            begin
+              if not (aOrder is TJSONNull) then
+                aSQLLine := 'ORDER BY ' + aOrder.Value
+              else
+                aSQLLine := 'ORDER BY 1';
+
+              if ValidSQLValue(aSQLLine) then
+                aQry.SQL.Add(aSQLLine);
+            end;
+
+          if aCriteria.TryGetValue<TJSONValue>('having', aHaving) then
+            begin
+              if not (aHaving is TJSONNull) then
+                begin
+                  aSQLLine := 'HAVING ' + aHaving.Value;
+                  if ValidSQLValue(aSQLLine) then
+                    aQry.SQL.Add(aSQLLine);
+                end;
+            end;
+
+          if aCriteria.TryGetValue<TJSONValue>('limit', aLimiter) then
+            begin
+              if not (aLimiter is TJSONNull) then
+                begin
+                  if aCriteria.TryGetValue<TJSONValue>('offset', aOffset) then
+                    begin
+                      if not (aOffset is TJSONNull) then
+                        begin
+                          aSQLLine := 'LIMIT ' + aLimiter.Value + ' OFFSET ' + aOffset.Value;
+
+                          if ValidSQLValue(aSQLLine) then
+                            aQry.SQL.Add(aSQLLine);
+                        end
+                    end
+                  else
+                    begin
+                      aSQLLine := 'LIMIT ' + aLimiter.Value;
+                      if ValidSQLValue(aSQLLine) then
+                        aQry.SQL.Add(aSQLLine);
+                    end;
+                end;
+            end;
+        end
+      else Result := False;
+    end
+  else Result := False;
+end;
+
+function TJSONHelper.BuildSQLClause(var aCMD: TFDCommand): Boolean;
+var
+  iWhere : Integer;
+  aCriteria : TJSONValue;
+  aWhere : TJSONArray;
+  aOrder : TJSONValue;
+  aGroup : TJSONValue;
+  aHaving : TJSONValue;
+  aLimiter : TJSONValue;
+  aOffset : TJSONValue;
+  aCond, aField, aParamName, aOperator, aNewCond, aSQLLine : String;
+  aValue : TJSONValue;
+  aOpenOperation, aClosOperation : Boolean;
+begin
+  Result := True;
+  if Self.TryGetValue<TJSONValue>('criteria', aCriteria) then
+    begin
+      if aCriteria.TryGetValue<TJSONArray>('where', aWhere) then
+        begin
+          aCond := 'WHERE ';
+          for iWhere := 0 to aWhere.Count do
+            begin
+              aOpenOperation := false;
+              aClosOperation := false;
+              aWhere.Items[iWhere].TryGetValue<string>('field', aField);
+              aParamName := 'p'+aField.Replace('.','_',[rfReplaceAll]);
+
+              aWhere.Items[iWhere].TryGetValue<string>('operator', aOperator);
+              aWhere.Items[iWhere].TryGetValue<Boolean>('openBlock', aOpenOperation);
+              aWhere.Items[iWhere].TryGetValue<Boolean>('closeBlock', aClosOperation);
+
+              aValue := aWhere.Items[iWhere].GetValue<TJSONValue>('value');
+              aSQLLine := aCond + IfThen(aOpenOperation,'(',EmptyStr) + aField + ' ' + aOperator + aParamName
+                + IfThen(aClosOperation, ')', EmptyStr);
+
+              if ValidSQLValue(aSQLLine) then
+                aCMD.CommandText.Add(aSQLLine);
+
+              if aValue is TJSONNull then
+                begin
+                  aCMD.Params.ParamByName(aParamName).Clear;
+                  aCMD.Params.ParamByName(aParamName).DataType := ftUnknown;
+                end
+              else if aValue is TJSONNumber then
+                begin
+                  if Pos('.', aValue.Value) > 0 then
+                    aCMD.Params.ParamByName(aParamName).Value := (aValue as TJSONNumber).AsDouble
+                  else
+                    aCMD.Params.ParamByName(aParamName).Value := (aValue as TJSONNumber).AsInt64;
+                end
+              else if aValue is TJSONBool then
+                begin
+                  aCMD.Params.ParamByName(aParamName).Value := (aValue as TJSONBool).AsBoolean;
+                end
+              else
+                begin
+                  aCMD.Params.ParamByName(aParamName).Value := aValue.Value;
+                end;
+
+              aWhere.Items[iWhere].TryGetValue<string>('next_condition', aNewCond);
+              if aNewCond <> EmptyStr then
+                aCond := 'AND ';
+            end;
+
+          if aCriteria.TryGetValue<TJSONValue>('group', aGroup) then
+            begin
+              if not (aGroup is TJSONNull) then
+                begin
+                  aSQLLine := 'GROUP BY '+aGroup.Value;
+                  if ValidSQLValue(aSQLLine) then
+                    aCMD.CommandText.Add(aSQLLine);
+                end;
+            end;
+
+          if aCriteria.TryGetValue<TJSONValue>('order', aOrder) then
+            begin
+              if not (aOrder is TJSONNull) then
+                aSQLLine := 'ORDER BY ' + aOrder.Value
+              else
+                aSQLLine := 'ORDER BY 1';
+
+              if ValidSQLValue(aSQLLine) then
+                aCMD.CommandText.Add(aSQLLine);
+            end;
+
+          if aCriteria.TryGetValue<TJSONValue>('having', aHaving) then
+            begin
+              if not (aHaving is TJSONNull) then
+                begin
+                  aSQLLine := 'HAVING ' + aHaving.Value;
+                  if ValidSQLValue(aSQLLine) then
+                    aCMD.CommandText.Add(aSQLLine);
+                end;
+            end;
+
+          if aCriteria.TryGetValue<TJSONValue>('limit', aLimiter) then
+            begin
+              if not (aLimiter is TJSONNull) then
+                begin
+                  if aCriteria.TryGetValue<TJSONValue>('offset', aOffset) then
+                    begin
+                      if not (aOffset is TJSONNull) then
+                        begin
+                          aSQLLine := 'LIMIT ' + aLimiter.Value + ' OFFSET ' + aOffset.Value;
+
+                          if ValidSQLValue(aSQLLine) then
+                            aCMD.CommandText.Add(aSQLLine);
+                        end
+                    end
+                  else
+                    begin
+                      aSQLLine := 'LIMIT ' + aLimiter.Value;
+                      if ValidSQLValue(aSQLLine) then
+                        aCMD.CommandText.Add(aSQLLine);
+                    end;
+                end;
+            end;
+        end
+      else Result := False;
     end
   else Result := False;
 end;
@@ -150,8 +385,6 @@ begin
           end;
       end;
     end;
-
-  aValue.Free;
 end;
 
 function TJSONHelper.DictionaryToJSON(
@@ -200,6 +433,21 @@ begin
   Result := aNewDoc;
 end;
 
+function TJSONHelper.ValidSQLValue(aValue: String): Boolean;
+begin
+  Result := true;
+  if aValue.Contains('--') then
+    begin
+      Result := false;
+      Exit
+    end
+  else if aValue.Contains('1=1') then
+    begin
+      Result := false;
+      Exit;
+    end;
+end;
+
 { TFUPStringHelper }
 
 class function TFUPFuncHelper.AlphaNumeric(const S : String; aCase : TCharCase) : String;
@@ -210,8 +458,8 @@ begin
   aNewStr := EmptyStr;
   for i := 1 to Length(S) do
     begin
-      if (S[i] in ['0'..'9']) or (S[i] in ['a'..'z']) or
-       (S[i] in ['A'..'Z']) then
+      if CharInSet(S[i], ['0'..'9']) or CharInSet(S[i], ['a'..'z']) or
+       CharInSet(S[i], ['A'..'Z']) then
       begin
         aNewStr := aNewStr + S[i];
       end;
@@ -222,11 +470,6 @@ begin
     tccLower: Result := LowerCase(aNewStr);
   end;
 
-end;
-
-constructor TFUPFuncHelper.Create;
-begin
-  //
 end;
 
 end.

@@ -3,7 +3,7 @@ unit forup.data.pgsql;
 interface
 uses forup.data.intf, System.Classes, System.StrUtils, System.SysUtils, System.JSON,
 System.JSON.Types, System.JSON.Writers, FireDAC.Comp.Client, DataSet.Serialize,
-Data.DB;
+Data.DB, FireDAC.Stan.Param;
 
 type
   TFUPPGData = class(TFUPDataAcces, IDataAcces)
@@ -69,7 +69,9 @@ begin
           except
             on e : Exception do
               begin
-
+                TLogger.GetInstance().Log(TLogLevel.llFailure, 'DeleteObjects', 'Can''t build delete statement',
+                TJSONObject(aFilter), nil, e);
+                Result := ErrorResult('Error building delete statement', aFilter);
               end;
           end;
         end;
@@ -84,8 +86,8 @@ function TFUPPGData.GetObject(aID: string; aFrom : string): TJSONValue;
 var
   pgQry : TFDQuery;
 begin
+  pgQry := TFDQuery.Create(nil);
   try
-    pgQry := TFDQuery.Create(nil);
     if main_connection.TryPGConnect() then
       begin
         pgQry.Connection := main_connection.PGConnection;
@@ -148,7 +150,7 @@ begin
                 end;
 
               LFrom := EmptyStr;
-              if not aFilter.TryGetValue<String>('from',LFrom) then
+              if not aFilter.TryGetValue<String>('from', LFrom) then
                 begin
                   raise Exception.Create('Not found [from] property at filter.');
                 end
@@ -179,7 +181,7 @@ begin
                 begin
                   TLogger.GetInstance().Log(TLogLevel.llFailure, 'GetObjects', 'Can''t build select statement',
                   TJSONObject(aFilter), nil, e);
-                  Result := ErrorResult('Error building select statement', nil);
+                  Result := ErrorResult('Error building select statement', aFilter);
                 end;
             end;
           end;

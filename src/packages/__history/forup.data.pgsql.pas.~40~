@@ -3,7 +3,7 @@ unit forup.data.pgsql;
 interface
 uses forup.data.intf, System.Classes, System.StrUtils, System.SysUtils, System.JSON,
 System.JSON.Types, System.JSON.Writers, FireDAC.Comp.Client, DataSet.Serialize,
-Data.DB;
+Data.DB, FireDAC.Stan.Param;
 
 type
   TFUPPGData = class(TFUPDataAcces, IDataAcces)
@@ -27,18 +27,23 @@ begin
   if main_connection.TryPGConnect() then
     begin
       pgCMD := TFDCommand.Create(nil);
+      pgCMD.CommandText.Clear;
       pgCMD.Connection := main_connection.PGConnection;
       with pgCMD do
         begin
           try
+            pgCMD.CommandText.Add('DELETE FROM '+aFrom+' WHERE _id = :ID');
+            pgCMD.Params.ParamByName('ID').Value := aID;
             Result := SuccessResult(
-                pgCMD.RowsAffected.ToString+' rows deleted',
+                pgCMD.RowsAffected.ToString+' row deleted',
                 TJSONObject.ParseJSONValue('{}') //Helper DataSet to JSON
               );
           except
             on e : Exception do
               begin
-
+                TLogger.GetInstance().Log(TLogLevel.llFailure, 'DeleteObject', 'ID = '+aID+';FROM = '+aFrom,
+                nil, nil, e);
+                Result := ErrorResult('Error Deleting ID ('+aID+') FROM ('+aFrom+')', nil);
               end;
           end;
         end;
@@ -67,7 +72,9 @@ begin
           except
             on e : Exception do
               begin
-
+                TLogger.GetInstance().Log(TLogLevel.llFailure, 'DeleteObjects', 'Can''t build delete statement',
+                TJSONObject(aFilter), nil, e);
+                Result := ErrorResult('Error building delete statement', aFilter);
               end;
           end;
         end;
@@ -82,8 +89,8 @@ function TFUPPGData.GetObject(aID: string; aFrom : string): TJSONValue;
 var
   pgQry : TFDQuery;
 begin
+  pgQry := TFDQuery.Create(nil);
   try
-    pgQry := TFDQuery.Create(nil);
     if main_connection.TryPGConnect() then
       begin
         pgQry.Connection := main_connection.PGConnection;
@@ -146,7 +153,7 @@ begin
                 end;
 
               LFrom := EmptyStr;
-              if not aFilter.TryGetValue<String>('from',LFrom) then
+              if not aFilter.TryGetValue<String>('from', LFrom) then
                 begin
                   raise Exception.Create('Not found [from] property at filter.');
                 end
@@ -177,7 +184,7 @@ begin
                 begin
                   TLogger.GetInstance().Log(TLogLevel.llFailure, 'GetObjects', 'Can''t build select statement',
                   TJSONObject(aFilter), nil, e);
-                  Result := ErrorResult('Error building select statement', nil);
+                  Result := ErrorResult('Error building select statement', aFilter);
                 end;
             end;
           end;
@@ -201,7 +208,19 @@ begin
       pgCMD.Connection := main_connection.PGConnection;
       with pgCMD do
         begin
-
+          try
+            Result := SuccessResult(
+                pgCMD.RowsAffected.ToString+' row inserted',
+                TJSONObject.ParseJSONValue('{}') //Helper DataSet to JSON
+              );
+          except
+            on e : Exception do
+              begin
+                TLogger.GetInstance().Log(TLogLevel.llFailure, 'InsertObject', 'Can''t build insert statement',
+                TJSONObject(aObj), nil, e);
+                Result := ErrorResult('Error building insert statement', aObj);
+              end;
+          end;
         end;
     end
   else
@@ -220,7 +239,20 @@ begin
       pgCMD.Connection := main_connection.PGConnection;
       with pgCMD do
         begin
-
+          try
+            Result := SuccessResult(
+                IfThen(pgCMD.RowsAffected > 1, pgCMD.RowsAffected.ToString+' rows updated',
+                  '1 row updated'),
+                TJSONObject.ParseJSONValue('{}') //Helper DataSet to JSON
+              );
+          except
+            on e : Exception do
+              begin
+                TLogger.GetInstance().Log(TLogLevel.llFailure, 'UpdateObject', 'Can''t build update statement',
+                TJSONObject(aObj), nil, e);
+                Result := ErrorResult('Error building update statement', aObj);
+              end;
+          end;
         end;
     end
   else

@@ -27,10 +27,14 @@ begin
   if main_connection.TryPGConnect() then
     begin
       pgCMD := TFDCommand.Create(nil);
+      pgCMD.CommandText.Clear;
       pgCMD.Connection := main_connection.PGConnection;
       with pgCMD do
         begin
           try
+            pgCMD.CommandText.Add('DELETE FROM '+aFrom+' WHERE _id = :ID;');
+            pgCMD.Params.ParamByName('ID').Value := aID;
+            pgCMD.Execute();
             Result := SuccessResult(
                 pgCMD.RowsAffected.ToString+' row deleted',
                 TJSONObject.ParseJSONValue('{}') //Helper DataSet to JSON
@@ -54,6 +58,7 @@ end;
 function TFUPPGData.DeleteObjects(aFilter: TJSONValue): TJSONValue;
 var
   pgCMD : TFDCommand;
+  LFrom : String;
 begin
   if main_connection.TryPGConnect() then
     begin
@@ -62,6 +67,27 @@ begin
       with pgCMD do
         begin
           try
+            LFrom := EmptyStr;
+            if not aFilter.TryGetValue<String>('from', LFrom) then
+              begin
+                raise Exception.Create('Not found [from] property at filter.');
+              end
+            else if LFrom.IsEmpty then
+              begin
+                raise Exception.Create('Property [from] empty at filter.');
+              end;
+
+            pgCMD.CommandText.Add('DELETE FROM '+LFrom);
+
+            if aFilter.BuildSQLClause(pgCMD) then
+              begin
+                pgCMD.Prepare;
+              end
+            else
+              begin
+                raise Exception.Create('Criteria not builted.');
+              end;
+            pgCMD.Execute;
             Result := SuccessResult(
                 pgCMD.RowsAffected.ToString+' rows deleted',
                 TJSONObject.ParseJSONValue('{}') //Helper DataSet to JSON
@@ -150,7 +176,7 @@ begin
                 end;
 
               LFrom := EmptyStr;
-              if not aFilter.TryGetValue<String>('from',LFrom) then
+              if not aFilter.TryGetValue<String>('from', LFrom) then
                 begin
                   raise Exception.Create('Not found [from] property at filter.');
                 end

@@ -35,22 +35,22 @@ uses forup.constants, forup.main_connection, forup.log_unit, forup.helpers;
 
 function TFUPMongoData.DeleteObject(aID, aFrom: string): TJSONValue;
 begin
-
+  Result := nil;
 end;
 
 function TFUPMongoData.DeleteObjects(aFilter: TJSONValue): TJSONValue;
 begin
-
+  Result := nil;
 end;
 
 function TFUPMongoData.GetObject(aID, aFrom: string): TJSONValue;
 begin
-
+  Result := nil;
 end;
 
 function TFUPMongoData.GetObjects(aFilter: TJSONValue): TJSONValue;
 begin
-
+  Result := nil;
 end;
 
 function TFUPMongoData.InsertObject(aObj: TJSONValue): TJSONValue;
@@ -61,14 +61,16 @@ var
   aGUID : TGUID;
   oCurs : IMongoCursor;
 begin
+  Result := nil;
   if main_connection.TryMongoConnect(_Env) then
     begin
       try
         try
+          _Doc := aObj.GetMongoDocument(_Env);
+
           if CreateGUID(aGUID) = S_OK then
             _LastID := TFUPFuncHelper.AlphaNumeric(GUIDToString(aGUID));
 
-          _Doc := aObj.GetMongoDocument(_Env);
           _Doc.Add('tracker', _LastID);
           main_connection.FMongoConn[DataBase][Collection].Insert(_Doc);
 
@@ -97,14 +99,14 @@ begin
             end;
         end;
       finally
-        _Doc.Free;
+        //
       end;
     end;
 end;
 
 function TFUPMongoData.UpdateObject(aObj: TJSONValue): TJSONValue;
 begin
-
+  Result := nil;
 end;
 
 end.
